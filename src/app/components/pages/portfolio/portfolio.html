@@ -1,0 +1,399 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.8"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav === 'dashboard'" (click)="navigateTo('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'ia'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Assistant IA</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'portfolio'" (click)="navigateTo('portfolio')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Portefeuille</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'reco'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Recommandations</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'profil'" (click)="navigateTo('profil')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Profil</span>
+      </a>
+    </nav>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" placeholder="Rechercher une société, un indicateur...">
+      </div>
+      <div class="topbar-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          IA en ligne
+        </div>
+        <button class="notif-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </button>
+        <div class="user-menu-wrapper">
+          <button class="user-avatar" (click)="toggleUserMenu($event)">{{ getInitialsUser() }}</button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="user-dropdown-header">
+              <span class="user-dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+              <span class="user-dropdown-email">{{ currentUser?.email }}</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Mon profil
+            </button>
+            <button class="user-dropdown-item" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              Paramètres
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item user-dropdown-logout" (click)="logout()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div>
+          <h1>Portefeuille</h1>
+          <p class="page-sub">Gestion et analyse de vos positions</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" (click)="openAddModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Ajouter
+          </button>
+          <button class="btn-outline" (click)="exportCSV()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Exporter
+          </button>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement du portefeuille...</p>
+      </div>
+
+      <div *ngIf="!isLoading">
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state" *ngIf="!portfolioData?.positions?.length">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+          <h3>Aucune position</h3>
+          <p>Ajoutez votre première position pour commencer à suivre votre portefeuille.</p>
+          <button class="btn-primary" (click)="openAddModal()">Ajouter une position</button>
+        </div>
+
+        <div *ngIf="portfolioData?.positions?.length">
+
+          <!-- ROW 1 : 3 stats cards -->
+          <div class="stats-row">
+
+            <!-- Total value -->
+            <div class="card card-total">
+              <div class="card-label">Valeur totale</div>
+              <div class="total-value">{{ formatCurrency(portfolioData!.totalValue) }}</div>
+              <div class="pl-line" [class]="plClass(portfolioData!.totalPL)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline [attr.points]="portfolioData!.totalPL >= 0 ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                </svg>
+                {{ formatCurrency(portfolioData!.totalPL) }}
+                ({{ formatPercent(portfolioData!.totalPLPercent) }}) P/L total
+              </div>
+            </div>
+
+            <!-- Sector donut -->
+            <div class="card card-donut">
+              <div class="card-label-sm">Répartition sectorielle</div>
+              <div class="donut-content">
+                <div class="donut-wrap">
+                  <svg viewBox="0 0 42 42" class="donut-svg">
+                    <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#f1f5f9" stroke-width="5"/>
+                    <circle *ngFor="let seg of donutSegments"
+                      cx="21" cy="21" r="15.9155"
+                      fill="none"
+                      [attr.stroke]="seg.color"
+                      stroke-width="5"
+                      [attr.stroke-dasharray]="seg.pct + ' ' + (100 - seg.pct)"
+                      [attr.stroke-dashoffset]="seg.offset"/>
+                  </svg>
+                </div>
+                <div class="donut-legend">
+                  <div class="legend-item" *ngFor="let seg of donutSegments">
+                    <span class="legend-dot" [style.background]="seg.color"></span>
+                    <span class="legend-label">{{ seg.label }}</span>
+                    <span class="legend-pct">{{ seg.pct | number:'1.0-0' }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Asset class bars -->
+            <div class="card card-asset">
+              <div class="card-label-sm">Répartition par classe d'actifs</div>
+              <div class="asset-list">
+                <div class="asset-item" *ngFor="let ac of portfolioData!.assetClassBreakdown">
+                  <div class="asset-header-row">
+                    <span class="asset-label">{{ ac.label }}</span>
+                    <span class="asset-pct">{{ ac.percent | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="asset-bar-bg">
+                    <div class="asset-bar-fill" [style.width.%]="ac.percent"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- POSITIONS TABLE -->
+          <div class="card table-card">
+            <div class="card-header">
+              <h3>Positions</h3>
+              <span class="count-badge">{{ portfolioData!.positions.length }} titres</span>
+            </div>
+            <div class="table-wrapper">
+              <table class="positions-table">
+                <thead>
+                  <tr>
+                    <th>Société</th>
+                    <th class="num">Quantité</th>
+                    <th class="num">Prix d'achat</th>
+                    <th class="num">Prix actuel</th>
+                    <th class="num">Valeur</th>
+                    <th class="num">Plus-value</th>
+                    <th class="num">Poids</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let pos of portfolioData!.positions">
+                    <td>
+                      <div class="company-cell">
+                        <div class="company-avatar" [style.background]="getSectorColor(pos.sector)">
+                          {{ getInitials(pos.symbol) }}
+                        </div>
+                        <div class="company-info">
+                          <span class="company-symbol">{{ pos.symbol }}</span>
+                          <span class="company-name">{{ pos.companyName }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="num">{{ pos.quantity | number:'1.0-4' }}</td>
+                    <td class="num">{{ pos.purchasePrice | number:'1.2-2' }} €</td>
+                    <td class="num">{{ pos.currentPrice | number:'1.2-2' }} €</td>
+                    <td class="num fw-600">{{ formatCurrency(pos.value) }}</td>
+                    <td class="num">
+                      <div class="pl-cell" [class]="plClass(pos.pl)">
+                        <span>{{ formatCurrency(pos.pl) }}</span>
+                        <span class="pl-pct">{{ formatPercent(pos.plPercent) }}</span>
+                      </div>
+                    </td>
+                    <td class="num">{{ pos.weight | number:'1.1-1' }}%</td>
+                    <td class="actions-cell">
+                      <button class="action-btn edit-btn" (click)="openEditModal(pos)" title="Modifier">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="action-btn delete-btn" (click)="deletePosition(pos.id)" title="Supprimer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                          <path d="M10 11v6M14 11v6"/>
+                          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- EVOLUTION CHART -->
+          <div class="card chart-card" *ngIf="portfolioData!.evolutionData.length > 1">
+            <div class="card-header">
+              <h3>Évolution du portefeuille</h3>
+            </div>
+            <div class="chart-wrapper">
+              <svg [attr.viewBox]="'0 0 ' + CHART_W + ' ' + CHART_H"
+                   class="evolution-svg" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0f1629" stop-opacity="0.12"/>
+                    <stop offset="100%" stop-color="#0f1629" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid lines -->
+                <line *ngFor="let yL of chartYLabels"
+                  [attr.x1]="PAD_L" [attr.y1]="yL.y"
+                  [attr.x2]="CHART_W - PAD_R" [attr.y2]="yL.y"
+                  stroke="#f1f5f9" stroke-width="1"/>
+                <!-- Area -->
+                <path [attr.d]="evolutionAreaPath" fill="url(#chartGrad)"/>
+                <!-- Line -->
+                <path [attr.d]="evolutionLinePath"
+                  fill="none" stroke="#0f1629" stroke-width="2"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+                <!-- Y labels -->
+                <text *ngFor="let yL of chartYLabels"
+                  [attr.x]="PAD_L - 6" [attr.y]="yL.y + 4"
+                  text-anchor="end" font-size="9" fill="#94a3b8">{{ yL.label }}</text>
+                <!-- X labels -->
+                <text *ngFor="let xL of chartXLabels"
+                  [attr.x]="xL.x" [attr.y]="CHART_H - 8"
+                  text-anchor="middle" font-size="9" fill="#94a3b8">{{ xL.label }}</text>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingPosition ? 'Modifier la position' : 'Ajouter une position' }}</h3>
+      <button class="modal-close" (click)="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form (ngSubmit)="submitForm()" class="modal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Symbole *</label>
+          <input type="text" [(ngModel)]="form.symbol" name="symbol"
+                 placeholder="AAPL" required/>
+        </div>
+        <div class="form-group">
+          <label>Société *</label>
+          <input type="text" [(ngModel)]="form.companyName" name="companyName"
+                 placeholder="Apple Inc." required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité *</label>
+          <input type="number" [(ngModel)]="form.quantity" name="quantity"
+                 min="0.0001" step="0.0001" required/>
+        </div>
+        <div class="form-group">
+          <label>Date d'achat *</label>
+          <input type="date" [(ngModel)]="form.purchaseDate" name="purchaseDate" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prix d'achat (€) *</label>
+          <input type="number" [(ngModel)]="form.purchasePrice" name="purchasePrice"
+                 min="0" step="0.01" required/>
+        </div>
+        <div class="form-group">
+          <label>Prix actuel (€) *</label>
+          <input type="number" [(ngModel)]="form.currentPrice" name="currentPrice"
+                 min="0" step="0.01" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Secteur</label>
+          <select [(ngModel)]="form.sector" name="sector">
+            <option *ngFor="let s of sectors" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Classe d'actifs</label>
+          <select [(ngModel)]="form.assetClass" name="assetClass">
+            <option *ngFor="let a of assetClasses" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving">
+          {{ isSaving ? 'Sauvegarde...' : (editingPosition ? 'Sauvegarder' : 'Ajouter') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

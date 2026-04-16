@@ -1,0 +1,325 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.8"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav === 'dashboard'" (click)="navigateTo('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'ia'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Assistant IA</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'portfolio'" (click)="navigateTo('portfolio')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Portefeuille</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'reco'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Recommandations</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'profil'" (click)="navigateTo('profil')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Profil</span>
+      </a>
+    </nav>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" placeholder="Rechercher une société, un indicateur...">
+      </div>
+      <div class="topbar-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          IA en ligne
+        </div>
+        <button class="notif-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </button>
+        <div class="user-menu-wrapper">
+          <button class="user-avatar" (click)="toggleUserMenu($event)">
+            {{ getInitials(currentUser?.firstName || 'U') }}
+          </button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="user-dropdown-header">
+              <span class="user-dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+              <span class="user-dropdown-email">{{ currentUser?.email }}</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item" (click)="navigateTo('profil')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Mon profil
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item user-dropdown-logout" (click)="logout()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+      <div class="profile-layout">
+
+        <!-- COLONNE PRINCIPALE -->
+        <div class="profile-main">
+
+          <!-- En-tête -->
+          <div class="profile-page-header">
+            <div>
+              <h1>Profil investisseur</h1>
+              <p>Personnalisez votre expérience d'investissement</p>
+            </div>
+            <button class="btn-save" (click)="saveProfile()" [disabled]="isSaving">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              </svg>
+              {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+          </div>
+
+          <!-- Toast succès -->
+          <div class="save-toast" *ngIf="saveSuccess">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Profil enregistré avec succès !
+          </div>
+
+          <!-- Niveau de risque -->
+          <div class="profile-card">
+            <h3>Niveau de risque</h3>
+            <div class="risk-labels">
+              <span>Prudent</span>
+              <span class="risk-value">{{ riskLevel }}</span>
+              <span>Agressif</span>
+            </div>
+            <div class="risk-slider-wrapper">
+              <input type="range" min="1" max="10" [(ngModel)]="riskLevel" class="risk-slider" [class]="getRiskClass()">
+            </div>
+            <div class="risk-tag-row">
+              <span class="risk-tag" [class]="getRiskClass()">{{ getRiskLabel() }}</span>
+              <span class="risk-description">
+                <ng-container *ngIf="riskLevel <= 3">Vous préférez sécuriser votre capital avec peu de risques.</ng-container>
+                <ng-container *ngIf="riskLevel > 3 && riskLevel <= 6">Vous acceptez un risque modéré pour un rendement équilibré.</ng-container>
+                <ng-container *ngIf="riskLevel > 6">Vous êtes prêt à accepter des risques importants pour maximiser les gains.</ng-container>
+              </span>
+            </div>
+          </div>
+
+          <!-- Objectif principal -->
+          <div class="profile-card">
+            <h3>Objectif principal</h3>
+            <div class="goal-cards">
+              <div class="goal-card" [class.selected]="investmentGoal === 'CROISSANCE'" (click)="investmentGoal = 'CROISSANCE'">
+                <div class="goal-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    <polyline points="16 7 22 7 22 13"/>
+                  </svg>
+                </div>
+                <span class="goal-title">Croissance</span>
+                <span class="goal-desc">Maximiser la croissance</span>
+              </div>
+              <div class="goal-card" [class.selected]="investmentGoal === 'REVENUS'" (click)="investmentGoal = 'REVENUS'">
+                <div class="goal-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                </div>
+                <span class="goal-title">Revenus</span>
+                <span class="goal-desc">Générer des revenus passifs</span>
+              </div>
+              <div class="goal-card" [class.selected]="investmentGoal === 'PRESERVATION'" (click)="investmentGoal = 'PRESERVATION'">
+                <div class="goal-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <span class="goal-title">Préservation</span>
+                <span class="goal-desc">Protéger votre capital</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Horizon d'investissement -->
+          <div class="profile-card">
+            <h3>Horizon d'investissement</h3>
+            <div class="horizon-buttons">
+              <button class="horizon-btn" [class.selected]="investmentHorizon === 'COURT'" (click)="investmentHorizon = 'COURT'">Court</button>
+              <button class="horizon-btn" [class.selected]="investmentHorizon === 'MOYEN'" (click)="investmentHorizon = 'MOYEN'">Moyen</button>
+              <button class="horizon-btn" [class.selected]="investmentHorizon === 'LONG'" (click)="investmentHorizon = 'LONG'">Long</button>
+            </div>
+            <div class="horizon-bar">
+              <div class="horizon-fill" [style.width]="investmentHorizon === 'COURT' ? '20%' : investmentHorizon === 'MOYEN' ? '55%' : '100%'"></div>
+            </div>
+            <div class="horizon-labels">
+              <span>&lt; 1 an</span>
+              <span>1-5 ans</span>
+              <span>&gt; 5 ans</span>
+            </div>
+          </div>
+
+          <!-- Capital disponible -->
+          <div class="profile-card">
+            <h3 class="capital-header">
+              Capital disponible
+            </h3>
+            <div class="capital-row">
+              <input type="range" min="0" max="500000" step="1000" [(ngModel)]="availableCapital" class="capital-slider">
+              <input type="number" [(ngModel)]="availableCapital" class="capital-input" min="0" max="500000">
+            </div>
+            <p class="capital-hint">Capital que vous souhaitez investir avec notre assistant</p>
+          </div>
+
+          <!-- Secteurs d'intérêt -->
+          <div class="profile-card">
+            <h3>Secteurs d'intérêt</h3>
+            <p class="sectors-hint">Sélectionnez les secteurs qui vous intéressent pour recevoir des recommandations ciblées</p>
+            <div class="sectors-grid">
+              <button
+                *ngFor="let sector of allSectors"
+                class="sector-chip"
+                [class.selected]="isSectorSelected(sector)"
+                (click)="toggleSector(sector)">
+                <svg *ngIf="isSectorSelected(sector)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ sector }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="profile-sidebar">
+
+          <!-- Carte utilisateur -->
+          <div class="profile-card user-card">
+            <div class="user-avatar-large">
+              {{ getInitials(currentUser?.firstName || 'U') }}
+            </div>
+            <div class="user-fullname">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</div>
+            <div class="user-email">{{ currentUser?.email }}</div>
+          </div>
+
+          <!-- Complétion -->
+          <div class="profile-card completion-card">
+            <div class="completion-header">
+              <span class="completion-label">Personnalisation</span>
+            </div>
+            <div class="completion-row">
+              <span>Profil complété</span>
+              <span class="completion-pct">{{ getCompletionPercent() }}%</span>
+            </div>
+            <div class="completion-bar">
+              <div class="completion-fill" [style.width.%]="getCompletionPercent()"></div>
+            </div>
+            <div class="completion-badge" *ngIf="getCompletionPercent() >= 80">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Personnalisation active
+            </div>
+          </div>
+
+          <!-- Résumé du profil -->
+          <div class="profile-card summary-card">
+            <h4>Résumé du profil</h4>
+            <div class="summary-row">
+              <span class="summary-key">Niveau de risque</span>
+              <span class="risk-tag summary-risk" [class]="getRiskClass()">{{ getRiskLabel() }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-key">Objectif</span>
+              <span class="summary-val">{{ getGoalLabel() }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-key">Horizon</span>
+              <span class="summary-val">{{ getHorizonLabel() }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-key">Capital</span>
+              <span class="summary-val">{{ availableCapital | number:'1.0-0' }} €</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-key">Secteurs</span>
+              <span class="summary-val">{{ selectedSectors.length }}</span>
+            </div>
+          </div>
+
+          <!-- Conseil InvestAI -->
+          <div class="profile-card conseil-card">
+            <h4>Conseil InvestAI</h4>
+            <p *ngIf="investmentGoal === 'CROISSANCE' && riskLevel > 6">
+              Basé sur votre profil agressif, nous vous recommandons de diversifier vos investissements entre actions et instruments à revenu fixe.
+            </p>
+            <p *ngIf="investmentGoal === 'CROISSANCE' && riskLevel <= 6">
+              Votre profil orienté croissance suggère une allocation majoritaire en actions avec une diversification sectorielle.
+            </p>
+            <p *ngIf="investmentGoal === 'REVENUS'">
+              Pour maximiser vos revenus passifs, privilégiez les obligations, les dividendes et les fonds immobiliers.
+            </p>
+            <p *ngIf="investmentGoal === 'PRESERVATION'">
+              Pour préserver votre capital, nous recommandons une allocation défensive avec des actifs peu volatils.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
