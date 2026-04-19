@@ -1,0 +1,301 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.9"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <div class="admin-badge" *ngIf="!sidebarCollapsed">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      Espace Admin
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav==='supervision'" (click)="navigateTo('supervision')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Supervision</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='users'" (click)="navigateTo('users')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Utilisateurs</span>
+      </a>
+      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Validation</span>
+      </a>
+      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Configuration</span>
+      </a>
+    </nav>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span>Supervision</span>
+      </div>
+      <div class="topbar-center">
+        <div class="topbar-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Rechercher un utilisateur, une métrique...">
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          IA en ligne
+        </div>
+        <button class="notif-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </button>
+        <div class="user-menu-wrapper">
+          <button class="user-avatar" (click)="toggleUserMenu($event)">{{ getInitials() }}</button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="user-dropdown-header">
+              <span class="user-dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+              <span class="user-dropdown-email">{{ currentUser?.email }}</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item" (click)="navigateTo('profil')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Mon profil
+            </button>
+            <button class="user-dropdown-item" (click)="navigateTo('settings')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              Paramètres
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item user-dropdown-logout" (click)="logout()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+      <div class="page-header">
+        <div>
+          <h1>Supervision</h1>
+          <p class="page-sub">Surveillance en temps réel du système et des performances</p>
+        </div>
+        <div class="all-ok-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Tout opérationnel
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-row" *ngIf="!isLoading && stats">
+        <div class="stat-card">
+          <div class="stat-icon stat-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalUsers | number }}</span>
+            <span class="stat-label">Utilisateurs actifs</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalPositions | number }}</span>
+            <span class="stat-label">Positions enregistrées</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ fmtPortfolio(stats.totalPortfolioValue) }}</span>
+            <span class="stat-label">Valeur des portefeuilles</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalInstruments | number }}</span>
+            <span class="stat-label">Instruments disponibles</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des données...</p>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="charts-row" *ngIf="!isLoading">
+        <!-- Utilisateurs actifs -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Utilisateurs actifs (24h)</span>
+            <span class="chart-badge chart-badge-teal">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Temps réel
+            </span>
+          </div>
+          <svg [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
+            <defs>
+              <linearGradient id="areaGrad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0f1629" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#0f1629" stop-opacity="0.01"/>
+              </linearGradient>
+            </defs>
+            <!-- Y grid lines -->
+            <line *ngFor="let y of yLabels(userActivityData)"
+              [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
+              stroke="#f0f0f0" stroke-width="1"/>
+            <!-- Y labels -->
+            <text *ngFor="let y of yLabels(userActivityData)"
+              [attr.x]="PL-6" [attr.y]="y.y+4" text-anchor="end"
+              font-size="10" fill="#94a3b8">{{ y.label }}</text>
+            <!-- X labels -->
+            <text *ngFor="let x of xLabels(userActivityData)"
+              [attr.x]="x.x" [attr.y]="H-8" text-anchor="middle"
+              font-size="10" fill="#94a3b8">{{ x.label }}</text>
+            <!-- Area fill -->
+            <path [attr.d]="areaPath(userActivityData)" fill="url(#areaGrad1)"/>
+            <!-- Line -->
+            <path [attr.d]="linePath(userActivityData)"
+              fill="none" stroke="#0f1629" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <!-- Temps réponse IA -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Temps de réponse IA moyen</span>
+            <span class="chart-badge chart-badge-amber">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              ~280ms
+            </span>
+          </div>
+          <svg [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
+            <defs>
+              <linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.01"/>
+              </linearGradient>
+            </defs>
+            <line *ngFor="let y of yLabels(responseTimeData)"
+              [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
+              stroke="#f0f0f0" stroke-width="1"/>
+            <text *ngFor="let y of yLabels(responseTimeData)"
+              [attr.x]="PL-6" [attr.y]="y.y+4" text-anchor="end"
+              font-size="10" fill="#94a3b8">{{ y.label }}ms</text>
+            <text *ngFor="let x of xLabels(responseTimeData)"
+              [attr.x]="x.x" [attr.y]="H-8" text-anchor="middle"
+              font-size="10" fill="#94a3b8">{{ x.label }}</text>
+            <path [attr.d]="areaPath(responseTimeData)" fill="url(#areaGrad2)"/>
+            <path [attr.d]="linePath(responseTimeData)"
+              fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="alerts-card" *ngIf="!isLoading">
+        <div class="alerts-header">
+          <h3>Alertes système</h3>
+          <span class="all-ok-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Tout opérationnel
+          </span>
+        </div>
+        <div class="alert-list">
+          <div class="alert-row" *ngFor="let a of alerts">
+            <div class="alert-dot" [style.background]="alertIconColor(a.type)">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                <polyline *ngIf="a.type==='success'" points="20 6 9 17 4 12"/>
+                <circle *ngIf="a.type==='info'" cx="12" cy="12" r="1" fill="white"/>
+                <path *ngIf="a.type==='warning'" d="M12 9v4M12 17h.01"/>
+              </svg>
+            </div>
+            <div class="alert-body">
+              <span class="alert-title">{{ a.title }}</span>
+              <span class="alert-meta">{{ a.category }} · {{ a.time }}</span>
+            </div>
+            <span class="alert-type-badge" [style.color]="alertIconColor(a.type)">{{ a.type }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

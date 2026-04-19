@@ -61,6 +61,7 @@ export class PortfolioComponent implements OnInit {
     dashboard: '/dashboard',
     portfolio: '/portfolio',
     profil:    '/profile',
+    settings:  '/settings',
   };
 
   private readonly sectorColors: Record<string, string> = {

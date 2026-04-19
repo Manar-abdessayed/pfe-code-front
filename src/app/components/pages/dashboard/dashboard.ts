@@ -129,6 +129,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.activeNav = nav;
     if (nav === 'portfolio') this.router.navigate(['/portfolio']);
     if (nav === 'profil')    this.router.navigate(['/profile']);
+    if (nav === 'settings')  this.router.navigate(['/settings']);
   }
 
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }

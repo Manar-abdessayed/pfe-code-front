@@ -25,7 +25,7 @@ export interface AuthResponse {
   firstName: string;
   lastName: string;
   role: string;
-  riskTolerance: string;
+  riskTolerance?: string;
 }
 
 @Injectable({
@@ -61,6 +61,10 @@ export class Auth {
 
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
+  }
+
+  isAdmin(): boolean {
+    return this.getCurrentUser()?.role === 'ADMIN';
   }
 
   getToken(): string | null {

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Auth } from '../../../services/auth';
+import { Auth, AuthResponse } from '../../../services/auth';
 
 @Component({
   selector: 'app-login',
@@ -12,35 +12,32 @@ import { Auth } from '../../../services/auth';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  email: string = '';
-  password: string = '';
-  rememberMe: boolean = false;
+  email = '';
+  password = '';
+  rememberMe = false;
   showPassword = false;
-  errorMessage: string = '';
-  isLoading: boolean = false;
+  errorMessage = '';
+  isLoading = false;
+  welcomeMessage = '';
+  welcomeRole: 'user' | 'admin' | '' = '';
 
   constructor(private readonly router: Router, private readonly authService: Auth) {}
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-  }
+  togglePasswordVisibility(): void { this.showPassword = !this.showPassword; }
+  onGoogleLogin(): void { console.log('Google login clicked'); }
+  onLinkedInLogin(): void { console.log('LinkedIn login clicked'); }
 
-  onGoogleLogin() {
-    console.log('Google login clicked');
-  }
-
-  onLinkedInLogin() {
-    console.log('LinkedIn login clicked');
-  }
-
-  onSubmit() {
+  onSubmit(): void {
     this.errorMessage = '';
     this.isLoading = true;
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
+      next: (res: AuthResponse) => {
         this.isLoading = false;
-        this.router.navigate(['/dashboard']);
+        const isAdmin = res.role === 'ADMIN';
+        this.welcomeRole = isAdmin ? 'admin' : 'user';
+        this.welcomeMessage = `Bienvenue, ${res.firstName}\u00a0! Connecté en tant qu'${isAdmin ? 'administrateur' : 'utilisateur'}.`;
+        setTimeout(() => this.router.navigate([isAdmin ? '/admin' : '/dashboard']), 1800);
       },
       error: (err) => {
         this.isLoading = false;
