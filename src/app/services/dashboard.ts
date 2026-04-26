@@ -24,6 +24,26 @@ export class DashboardService {
     return this.http.get<any[]>(`${this.api}/search?q=${encodeURIComponent(q)}`);
   }
 
+  getSignalDistribution(): Observable<any> {
+    return this.http.get(`${this.api}/signal-distribution`);
+  }
+
+  getVolumeTrend(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/volume-trend`);
+  }
+
+  getRsiZones(): Observable<any> {
+    return this.http.get(`${this.api}/rsi-zones`);
+  }
+
+  getMarketVolatility(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/market-volatility`);
+  }
+
+  getMacdTrend(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/macd-trend`);
+  }
+
   getInstruments(): Observable<any[]> {
     return this.http.get<any[]>(`${this.api}/instruments`);
   }
@@ -34,5 +54,9 @@ export class DashboardService {
 
   getTechnicals(isin: string): Observable<any> {
     return this.http.get(`${this.api}/technicals/${isin}`);
+  }
+
+  getMarketPerformance(months: number = 12): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/market-performance?months=${months}`);
   }
 }

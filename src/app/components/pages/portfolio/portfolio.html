@@ -19,7 +19,7 @@
         </svg>
         <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
       </a>
-      <a class="nav-item" [class.active]="activeNav === 'ia'">
+      <a class="nav-item" [class.active]="activeNav === 'ia'" (click)="navigateTo('ia')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
@@ -121,11 +121,18 @@
           <p class="page-sub">Gestion et analyse de vos positions</p>
         </div>
         <div class="header-actions">
-          <button class="btn-primary" (click)="openAddModal()">
+          <button class="btn-buy" (click)="openBuyModal()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-            Ajouter
+            Acheter
+          </button>
+          <button class="btn-outline" (click)="openAddModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Manuel
           </button>
           <button class="btn-outline" (click)="exportCSV()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -152,19 +159,63 @@
             <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
           </svg>
           <h3>Aucune position</h3>
-          <p>Ajoutez votre première position pour commencer à suivre votre portefeuille.</p>
-          <button class="btn-primary" (click)="openAddModal()">Ajouter une position</button>
+          <p>Achetez votre première action pour commencer à suivre votre portefeuille.</p>
+          <div class="empty-capital-badge" *ngIf="availableCapital > 0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+            Liquidités disponibles : <strong>{{ formatCurrency(availableCapital) }}</strong>
+          </div>
+          <button class="btn-buy" (click)="openBuyModal()">Acheter une action</button>
         </div>
 
         <div *ngIf="portfolioData?.positions?.length">
 
-          <!-- ROW 1 : 3 stats cards -->
+          <!-- ROW 1 : stats cards -->
           <div class="stats-row">
 
-            <!-- Total value -->
-            <div class="card card-total">
-              <div class="card-label">Valeur totale</div>
-              <div class="total-value">{{ formatCurrency(portfolioData!.totalValue) }}</div>
+            <div class="card card-capital">
+              <!-- Capital total -->
+              <div class="capital-top">
+                <div>
+                  <div class="card-label">Capital total</div>
+                  <div class="total-value">{{ formatCurrency(totalCapital) }}</div>
+                </div>
+                <div class="pl-badge" [class]="plClass(portfolioData!.totalPL)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline [attr.points]="portfolioData!.totalPL >= 0 ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                  {{ formatPercent(portfolioData!.totalPLPercent) }}
+                </div>
+              </div>
+
+              <!-- Allocation bar stocks vs liquidités -->
+              <div class="capital-alloc-bar">
+                <div class="alloc-fill-stocks" [style.width.%]="stocksPercent"></div>
+                <div class="alloc-fill-liq"    [style.width.%]="liquidityPercent"></div>
+              </div>
+
+              <!-- Two sub-metrics -->
+              <div class="capital-metrics">
+                <div class="capital-metric">
+                  <div class="cm-dot cm-dot-stocks"></div>
+                  <div class="cm-detail">
+                    <span class="cm-label">Portefeuille</span>
+                    <span class="cm-value">{{ formatCurrency(portfolioData!.totalValue) }}</span>
+                    <span class="cm-pct">{{ stocksPercent | number:'1.0-0' }}%</span>
+                  </div>
+                </div>
+                <div class="capital-metric">
+                  <div class="cm-dot cm-dot-liq"></div>
+                  <div class="cm-detail">
+                    <span class="cm-label">Liquidités</span>
+                    <span class="cm-value">{{ formatCurrency(availableCapital) }}</span>
+                    <span class="cm-pct">{{ liquidityPercent | number:'1.0-0' }}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- P/L row -->
               <div class="pl-line" [class]="plClass(portfolioData!.totalPL)">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <polyline [attr.points]="portfolioData!.totalPL >= 0 ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
@@ -174,7 +225,6 @@
               </div>
             </div>
 
-            <!-- Sector donut -->
             <div class="card card-donut">
               <div class="card-label-sm">Répartition sectorielle</div>
               <div class="donut-content">
@@ -200,7 +250,6 @@
               </div>
             </div>
 
-            <!-- Asset class bars -->
             <div class="card card-asset">
               <div class="card-label-sm">Répartition par classe d'actifs</div>
               <div class="asset-list">
@@ -218,12 +267,30 @@
 
           </div>
 
+          <!-- TABS -->
+          <div class="tabs-bar">
+            <button class="tab-btn" [class.active]="activeTab === 'positions'" (click)="switchTab('positions')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+              Positions
+              <span class="tab-count">{{ portfolioData!.positions.length }}</span>
+            </button>
+            <button class="tab-btn" [class.active]="activeTab === 'transactions'" (click)="switchTab('transactions')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 014-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 01-4 4H3"/>
+              </svg>
+              Transactions
+            </button>
+          </div>
+
           <!-- POSITIONS TABLE -->
-          <div class="card table-card">
-            <div class="card-header">
-              <h3>Positions</h3>
-              <span class="count-badge">{{ portfolioData!.positions.length }} titres</span>
-            </div>
+          <div class="card table-card" *ngIf="activeTab === 'positions'">
             <div class="table-wrapper">
               <table class="positions-table">
                 <thead>
@@ -241,7 +308,7 @@
                 <tbody>
                   <tr *ngFor="let pos of portfolioData!.positions">
                     <td>
-                      <div class="company-cell">
+                      <div class="company-cell company-cell-clickable" (click)="openDetailModal(pos)">
                         <div class="company-avatar" [style.background]="getSectorColor(pos.sector)">
                           {{ getInitials(pos.symbol) }}
                         </div>
@@ -249,6 +316,9 @@
                           <span class="company-symbol">{{ pos.symbol }}</span>
                           <span class="company-name">{{ pos.companyName }}</span>
                         </div>
+                        <svg class="info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
                       </div>
                     </td>
                     <td class="num">{{ pos.quantity | number:'1.0-4' }}</td>
@@ -263,6 +333,15 @@
                     </td>
                     <td class="num">{{ pos.weight | number:'1.1-1' }}%</td>
                     <td class="actions-cell">
+                      <button class="action-btn sell-btn" (click)="openSellModal(pos)" title="Vendre">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="17 1 21 5 17 9"/>
+                          <path d="M3 11V9a4 4 0 014-4h14"/>
+                          <polyline points="7 23 3 19 7 15"/>
+                          <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                        </svg>
+                        Vendre
+                      </button>
                       <button class="action-btn edit-btn" (click)="openEditModal(pos)" title="Modifier">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -284,6 +363,62 @@
             </div>
           </div>
 
+          <!-- TRANSACTIONS TABLE -->
+          <div class="card table-card" *ngIf="activeTab === 'transactions'">
+            <div class="loading-overlay-inline" *ngIf="transactionsLoading">
+              <div class="spinner"></div>
+            </div>
+            <div *ngIf="!transactionsLoading">
+              <div class="empty-tx" *ngIf="!transactions.length">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+                  <polyline points="17 1 21 5 17 9"/>
+                  <path d="M3 11V9a4 4 0 014-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/>
+                  <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                </svg>
+                <p>Aucune transaction enregistrée.</p>
+              </div>
+              <div class="table-wrapper" *ngIf="transactions.length">
+                <table class="positions-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Société</th>
+                      <th class="num">Quantité</th>
+                      <th class="num">Prix unitaire</th>
+                      <th class="num">Montant total</th>
+                      <th class="num">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let tx of transactions">
+                      <td>
+                        <span class="tx-badge" [class.tx-buy]="tx.type === 'BUY'" [class.tx-sell]="tx.type === 'SELL'">
+                          {{ tx.type === 'BUY' ? 'Achat' : 'Vente' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="company-cell">
+                          <div class="company-avatar" [style.background]="tx.type === 'BUY' ? '#16a34a' : '#ef4444'">
+                            {{ getInitials(tx.symbol) }}
+                          </div>
+                          <div class="company-info">
+                            <span class="company-symbol">{{ tx.symbol }}</span>
+                            <span class="company-name">{{ tx.companyName }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="num">{{ tx.quantity | number:'1.0-4' }}</td>
+                      <td class="num">{{ tx.price | number:'1.2-2' }} €</td>
+                      <td class="num fw-600">{{ formatCurrency(tx.totalAmount) }}</td>
+                      <td class="num">{{ tx.transactionDate }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <!-- EVOLUTION CHART -->
           <div class="card chart-card" *ngIf="portfolioData!.evolutionData.length > 1">
             <div class="card-header">
@@ -298,22 +433,17 @@
                     <stop offset="100%" stop-color="#0f1629" stop-opacity="0"/>
                   </linearGradient>
                 </defs>
-                <!-- Grid lines -->
                 <line *ngFor="let yL of chartYLabels"
                   [attr.x1]="PAD_L" [attr.y1]="yL.y"
                   [attr.x2]="CHART_W - PAD_R" [attr.y2]="yL.y"
                   stroke="#f1f5f9" stroke-width="1"/>
-                <!-- Area -->
                 <path [attr.d]="evolutionAreaPath" fill="url(#chartGrad)"/>
-                <!-- Line -->
                 <path [attr.d]="evolutionLinePath"
                   fill="none" stroke="#0f1629" stroke-width="2"
                   stroke-linejoin="round" stroke-linecap="round"/>
-                <!-- Y labels -->
                 <text *ngFor="let yL of chartYLabels"
                   [attr.x]="PAD_L - 6" [attr.y]="yL.y + 4"
                   text-anchor="end" font-size="9" fill="#94a3b8">{{ yL.label }}</text>
-                <!-- X labels -->
                 <text *ngFor="let xL of chartXLabels"
                   [attr.x]="xL.x" [attr.y]="CHART_H - 8"
                   text-anchor="middle" font-size="9" fill="#94a3b8">{{ xL.label }}</text>
@@ -327,7 +457,382 @@
   </div>
 </div>
 
-<!-- ADD / EDIT MODAL -->
+<!-- ════════════════════════════════════════════════════════════════
+     DETAIL / ANALYSE MODAL
+════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
+  <div class="modal modal-detail" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <h3>Analyse {{ detailPosition?.symbol }}</h3>
+      <button class="modal-close" (click)="closeDetailModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="detail-body" *ngIf="detailPosition">
+
+      <!-- Company info -->
+      <div class="detail-company">
+        <div class="detail-avatar" [style.background]="getSectorColor(detailPosition.sector)">
+          {{ getInitials(detailPosition.symbol) }}
+        </div>
+        <div class="detail-company-info">
+          <span class="detail-symbol">{{ detailPosition.symbol }}</span>
+          <span class="detail-name">{{ detailPosition.companyName }}</span>
+          <span class="detail-sector-badge">{{ detailPosition.sector }}</span>
+        </div>
+      </div>
+
+      <!-- Key metrics -->
+      <div class="detail-metrics">
+        <div class="detail-metric">
+          <span class="dm-label">Quantité</span>
+          <span class="dm-value">{{ detailPosition.quantity | number:'1.0-4' }}</span>
+        </div>
+        <div class="detail-metric">
+          <span class="dm-label">Prix d'achat</span>
+          <span class="dm-value">{{ formatCurrency(detailPosition.purchasePrice) }}</span>
+        </div>
+        <div class="detail-metric">
+          <span class="dm-label">Prix actuel</span>
+          <span class="dm-value" [class]="plClass(detailPosition.pl)">
+            {{ formatCurrency(detailPosition.currentPrice) }}
+          </span>
+        </div>
+        <div class="detail-metric">
+          <span class="dm-label">Valeur totale</span>
+          <span class="dm-value fw-600">{{ formatCurrency(detailPosition.value) }}</span>
+        </div>
+        <div class="detail-metric">
+          <span class="dm-label">Plus-value</span>
+          <span class="dm-value" [class]="plClass(detailPosition.pl)">
+            {{ formatCurrency(detailPosition.pl) }} ({{ formatPercent(detailPosition.plPercent) }})
+          </span>
+        </div>
+        <div class="detail-metric">
+          <span class="dm-label">Poids</span>
+          <span class="dm-value">{{ detailPosition.weight | number:'1.1-1' }}%</span>
+        </div>
+      </div>
+
+      <!-- IA Analysis -->
+      <div class="detail-analysis-section">
+        <h4 class="detail-section-title">Analyse IA</h4>
+
+        <!-- Loading -->
+        <div class="loading-overlay-inline" *ngIf="detailLoading">
+          <div class="spinner spinner-sm"></div>
+          <span>Analyse en cours...</span>
+        </div>
+
+        <!-- No data -->
+        <div class="detail-no-data" *ngIf="!detailLoading && (!detailAnalysis || !detailAnalysis.available)">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>Aucune donnée technique disponible pour ce titre.</span>
+        </div>
+
+        <!-- Analysis data -->
+        <div class="detail-analysis-grid" *ngIf="!detailLoading && detailAnalysis?.available">
+          <div class="detail-analysis-row">
+            <span class="da-label">Signal technique</span>
+            <span class="da-value signal-tag" [class]="signalClass(detailAnalysis.signalLabel)">
+              {{ detailAnalysis.signalLabel }}
+            </span>
+          </div>
+          <div class="detail-analysis-row">
+            <span class="da-label">Support</span>
+            <span class="da-value">{{ detailAnalysis.support | number:'1.2-2' }} €</span>
+          </div>
+          <div class="detail-analysis-row">
+            <span class="da-label">Résistance</span>
+            <span class="da-value">{{ detailAnalysis.resistance | number:'1.2-2' }} €</span>
+          </div>
+          <div class="detail-analysis-row" *ngIf="detailAnalysis.rsi != null">
+            <span class="da-label">RSI (14)</span>
+            <span class="da-value">{{ detailAnalysis.rsi | number:'1.1-1' }}</span>
+          </div>
+          <div class="detail-analysis-row" *ngIf="detailAnalysis.volatility != null">
+            <span class="da-label">Volatilité (20j)</span>
+            <span class="da-value">{{ detailAnalysis.volatility | number:'1.2-2' }}%</span>
+          </div>
+          <div class="detail-analysis-row">
+            <span class="da-label">Recommandation</span>
+            <span class="da-value reco-tag" [class]="recoClass(detailAnalysis.recommendation)">
+              {{ detailAnalysis.recommendation }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="detail-disclaimer">
+        <strong>Avertissement :</strong> Cette analyse est générée automatiquement par notre IA et ne constitue pas un conseil financier.
+      </div>
+
+      <!-- Actions -->
+      <div class="detail-actions">
+        <button class="btn-buy" (click)="closeDetailModal(); openSellModal(detailPosition)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/>
+          </svg>
+          Vendre
+        </button>
+        <button class="btn-cancel" (click)="closeDetailModal()">Fermer</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     BUY MODAL
+════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showBuyModal" (click)="closeBuyModal()">
+  <div class="modal modal-buy" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#16a34a">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Acheter une action
+      </h3>
+      <button class="modal-close" (click)="closeBuyModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Step 1: select instrument -->
+    <div *ngIf="!selectedInstrument">
+      <div class="buy-search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" [(ngModel)]="buySearchQuery" (input)="onBuySearchInput()"
+               placeholder="Rechercher un titre (ex: TOTAL, BNP...)" autofocus/>
+      </div>
+
+      <div class="instrument-list-wrapper">
+        <div class="loading-overlay-inline" *ngIf="buySearchLoading">
+          <div class="spinner spinner-sm"></div>
+          <span>Chargement...</span>
+        </div>
+
+        <div class="instrument-list" *ngIf="!buySearchLoading">
+          <div *ngIf="!buyInstruments.length" class="no-results">
+            Aucun résultat trouvé.
+          </div>
+          <div class="instrument-row" *ngFor="let inst of buyInstruments"
+               (click)="selectInstrument(inst)">
+            <div class="inst-avatar">{{ getInitials(inst.short_name) }}</div>
+            <div class="inst-info">
+              <span class="inst-symbol">{{ inst.full_name }}</span>
+              <span class="inst-name">{{ inst.short_name }}</span>
+            </div>
+            <div class="inst-price" *ngIf="inst.close_price">
+              <span class="inst-price-val">{{ inst.close_price | number:'1.2-2' }} {{ inst.currency || '€' }}</span>
+              <span class="inst-variation"
+                [class.positive]="(inst.price_variation_pct ?? 0) >= 0"
+                [class.negative]="(inst.price_variation_pct ?? 0) < 0">
+                {{ inst.price_variation_pct != null ? formatPercent(inst.price_variation_pct) : '-' }}
+              </span>
+            </div>
+            <div class="inst-price" *ngIf="!inst.close_price">
+              <span class="inst-price-na">Prix N/D</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: confirm buy -->
+    <div *ngIf="selectedInstrument">
+      <div class="selected-inst-banner">
+        <div class="inst-avatar inst-avatar-lg">{{ getInitials(selectedInstrument.short_name) }}</div>
+        <div class="inst-info">
+          <span class="inst-symbol">{{ selectedInstrument.full_name }}</span>
+          <span class="inst-name">{{ selectedInstrument.short_name }}</span>
+        </div>
+        <div class="inst-price">
+          <span class="inst-price-val">{{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || '€' }}</span>
+          <span class="inst-variation"
+            [class.positive]="(selectedInstrument.price_variation_pct ?? 0) >= 0"
+            [class.negative]="(selectedInstrument.price_variation_pct ?? 0) < 0">
+            {{ selectedInstrument.price_variation_pct != null ? formatPercent(selectedInstrument.price_variation_pct) : '' }}
+          </span>
+        </div>
+        <button class="change-inst-btn" (click)="clearSelection()">Changer</button>
+      </div>
+
+      <form (ngSubmit)="submitBuy()" class="modal-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantité *</label>
+            <input type="number" [(ngModel)]="buyForm.quantity" name="quantity"
+                   min="0.0001" step="0.0001" required/>
+          </div>
+          <div class="form-group">
+            <label>Prix unitaire ({{ selectedInstrument.currency || '€' }}) *</label>
+            <input type="number" [(ngModel)]="buyForm.price" name="price"
+                   min="0.0001" step="0.0001" required/>
+            <span class="form-hint" *ngIf="selectedInstrument.close_price">
+              Dernier cours : {{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || '€' }}
+            </span>
+            <span class="form-hint" *ngIf="!selectedInstrument.close_price">
+              Aucun cours disponible — saisissez le prix manuellement
+            </span>
+          </div>
+        </div>
+
+        <div class="budget-info-row">
+          <div class="budget-info-left">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+            <span>Budget disponible</span>
+          </div>
+          <strong [class.budget-ok]="!budgetExceeded" [class.budget-over]="budgetExceeded">
+            {{ formatCurrency(availableCapital) }}
+          </strong>
+        </div>
+
+        <div class="buy-total-row" [class.buy-total-over]="budgetExceeded">
+          <span>Montant total estimé</span>
+          <strong>{{ formatCurrency(buyTotal) }}</strong>
+        </div>
+
+        <div class="budget-warning" *ngIf="budgetExceeded">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Budget insuffisant — il manque {{ formatCurrency(buyTotal - availableCapital) }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Secteur</label>
+            <select [(ngModel)]="buyForm.sector" name="sector">
+              <option *ngFor="let s of sectors" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Classe d'actifs</label>
+            <select [(ngModel)]="buyForm.assetClass" name="assetClass">
+              <option *ngFor="let a of assetClasses" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-error" *ngIf="buyError">{{ buyError }}</div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeBuyModal()">Annuler</button>
+          <button type="submit" class="btn-buy" [disabled]="isBuying || budgetExceeded">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            {{ isBuying ? 'Achat en cours...' : 'Confirmer l\'achat' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SELL MODAL
+════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showSellModal" (click)="closeSellModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#ef4444">
+          <polyline points="17 1 21 5 17 9"/>
+          <path d="M3 11V9a4 4 0 014-4h14"/>
+          <polyline points="7 23 3 19 7 15"/>
+          <path d="M21 13v2a4 4 0 01-4 4H3"/>
+        </svg>
+        Vendre — {{ sellingPosition?.symbol }}
+      </h3>
+      <button class="modal-close" (click)="closeSellModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Position summary -->
+    <div class="sell-position-info" *ngIf="sellingPosition">
+      <div class="sell-info-row">
+        <span class="sell-info-label">Société</span>
+        <span class="sell-info-value">{{ sellingPosition.companyName }}</span>
+      </div>
+      <div class="sell-info-row">
+        <span class="sell-info-label">Quantité détenue</span>
+        <span class="sell-info-value">{{ sellingPosition.quantity | number:'1.0-4' }}</span>
+      </div>
+      <div class="sell-info-row">
+        <span class="sell-info-label">Valeur actuelle</span>
+        <span class="sell-info-value">{{ formatCurrency(sellingPosition.value) }}</span>
+      </div>
+      <div class="sell-info-row">
+        <span class="sell-info-label">Plus-value latente</span>
+        <span class="sell-info-value" [class]="plClass(sellingPosition.pl)">
+          {{ formatCurrency(sellingPosition.pl) }} ({{ formatPercent(sellingPosition.plPercent) }})
+        </span>
+      </div>
+    </div>
+
+    <form (ngSubmit)="submitSell()" class="modal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantité à vendre *</label>
+          <input type="number" [(ngModel)]="sellForm.quantity" name="quantity"
+                 [max]="sellingPosition?.quantity ?? null"
+                 min="0.0001" step="0.0001" required/>
+          <span class="form-hint">Max : {{ sellingPosition?.quantity | number:'1.0-4' }}</span>
+        </div>
+        <div class="form-group">
+          <label>Prix de vente (€) *</label>
+          <input type="number" [(ngModel)]="sellForm.price" name="price"
+                 min="0.01" step="0.01" required/>
+          <span class="form-hint">Dernier prix connu : {{ sellingPosition?.currentPrice | number:'1.2-2' }} €</span>
+        </div>
+      </div>
+
+      <div class="sell-total-row">
+        <span>Montant estimé de la vente</span>
+        <strong>{{ formatCurrency(sellTotal) }}</strong>
+      </div>
+
+      <div class="form-error" *ngIf="sellError">{{ sellError }}</div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeSellModal()">Annuler</button>
+        <button type="submit" class="btn-sell" [disabled]="isSelling">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 014-4h14"/>
+          </svg>
+          {{ isSelling ? 'Vente en cours...' : 'Confirmer la vente' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MANUAL ADD / EDIT MODAL
+════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">

@@ -2,9 +2,10 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, of, Subscription } from 'rxjs';
+import { Subject, of, Subscription, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { DashboardService } from '../../../services/dashboard';
+import { PortfolioService } from '../../../services/portfolio';
 import { Auth } from '../../../services/auth';
 
 @Component({
@@ -25,15 +26,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeNav = 'dashboard';
   userMenuOpen = false;
 
+  // Portfolio (valeur + performance)
+  portfolioData: any = null;
+  performancePeriod: '1M' | '3M' | '6M' | '1Y' = '1Y';
+  marketPerf: any[] = [];
+  portfolioLoading = true;
+
+  // Alerts
+  alerts: any[] = [];
+  unreadAlerts = 0;
+
   searchQuery = '';
   searchResults: any[] = [];
   showSearchDropdown = false;
+
+  // Analytics
+  signalDistribution: any = null;
+  volumeTrend: any[] = [];
+  rsiZones: any = null;
+  marketVolatility: any[] = [];
+  macdTrend: any[] = [];
+  analyticsLoading = true;
 
   private readonly searchSubject = new Subject<string>();
   private searchSub!: Subscription;
 
   constructor(
     private readonly dashboardService: DashboardService,
+    private readonly portfolioService: PortfolioService,
     private readonly authService: Auth,
     private readonly router: Router
   ) {}
@@ -48,23 +68,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.loadDashboardData();
+    this.loadPortfolioData();
 
     this.searchSub = this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
-      switchMap((q) => q.length >= 2 ? this.dashboardService.search(q) : of([]))
+      switchMap(q => q.length >= 2 ? this.dashboardService.search(q) : of([]))
     ).subscribe({
-      next: (results) => {
-        this.searchResults = results;
-        this.showSearchDropdown = results.length > 0;
-      },
-      error: () => { this.searchResults = []; this.showSearchDropdown = false; }
+      next: results => { this.searchResults = results; this.showSearchDropdown = results.length > 0; },
+      error: ()      => { this.searchResults = []; this.showSearchDropdown = false; }
     });
   }
 
-  ngOnDestroy(): void {
-    this.searchSub?.unsubscribe();
-  }
+  ngOnDestroy(): void { this.searchSub?.unsubscribe(); }
 
   onSearchInput(q: string): void {
     this.searchQuery = q;
@@ -72,24 +88,234 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (q.length < 2) this.showSearchDropdown = false;
   }
 
+  // ── Data loading ────────────────────────────────────────────────────────────
+
+  loadPortfolioData(): void {
+    if (!this.currentUser?.id) { this.portfolioLoading = false; return; }
+    this.portfolioLoading = true;
+
+    forkJoin([
+      this.portfolioService.getPortfolio(this.currentUser.id),
+      this.dashboardService.getMarketPerformance(12)
+    ]).subscribe({
+      next: ([portfolio, perf]) => {
+        this.portfolioData = portfolio;
+        this.marketPerf    = (perf as any[]).reverse ? [...(perf as any[])].sort((a, b) => a.month.localeCompare(b.month)) : perf as any[];
+        this.portfolioLoading = false;
+      },
+      error: () => { this.portfolioLoading = false; }
+    });
+  }
+
   loadDashboardData(): void {
     this.isLoading = true;
 
     this.dashboardService.getMarketSummary().subscribe({
-      next: (data) => this.marketSummary = data,
-      error: (err) => console.error('market-summary error', err)
+      next: data => { this.marketSummary = data; this.buildAlerts(); },
+      error: err  => console.error('market-summary error', err)
     });
 
     this.dashboardService.getTopMovers().subscribe({
-      next: (data) => this.topMovers = data,
-      error: (err) => console.error('top-movers error', err)
+      next: data => { this.topMovers = data; this.buildAlerts(); },
+      error: err  => console.error('top-movers error', err)
     });
 
     this.dashboardService.getSignals().subscribe({
-      next: (data) => { this.signals = data; this.isLoading = false; },
-      error: (err) => { console.error('signals error', err); this.isLoading = false; }
+      next: data => { this.signals = data; this.isLoading = false; },
+      error: err  => { console.error('signals error', err); this.isLoading = false; }
+    });
+
+    this.loadAnalytics();
+  }
+
+  loadAnalytics(): void {
+    this.analyticsLoading = true;
+    let pending = 5;
+    const done = () => { if (--pending === 0) this.analyticsLoading = false; };
+
+    this.dashboardService.getSignalDistribution().subscribe({ next: d => { this.signalDistribution = d; done(); }, error: () => done() });
+    this.dashboardService.getVolumeTrend().subscribe({ next: d => { this.volumeTrend = d; done(); }, error: () => done() });
+    this.dashboardService.getRsiZones().subscribe({ next: d => { this.rsiZones = d; done(); }, error: () => done() });
+    this.dashboardService.getMarketVolatility().subscribe({ next: d => { this.marketVolatility = d; done(); }, error: () => done() });
+    this.dashboardService.getMacdTrend().subscribe({ next: d => { this.macdTrend = d; done(); }, error: () => done() });
+  }
+
+  buildAlerts(): void {
+    if (!this.topMovers?.gainers || !this.topMovers?.losers) return;
+    const date = this.topMovers.date || '';
+    const built: any[] = [
+      ...this.topMovers.gainers.slice(0, 3).map((g: any) => ({
+        color: 'green',
+        title: `${g.symbol || g.short_name} franchit un nouveau plus haut`,
+        sub:   `${g.short_name || g.symbol} atteint ${(+g.close_price).toFixed(2)} avec une hausse de ${this.formatVariation(g.price_variation_pct)}`,
+        date
+      })),
+      ...this.topMovers.losers.slice(0, 2).map((l: any) => ({
+        color: 'red',
+        title: `${l.symbol || l.short_name} en forte baisse`,
+        sub:   `Clôture à ${(+l.close_price).toFixed(2)} — variation ${this.formatVariation(l.price_variation_pct)}`,
+        date
+      }))
+    ];
+    this.alerts = built;
+    this.unreadAlerts = Math.min(built.length, 2);
+  }
+
+  // ── Portfolio value card ────────────────────────────────────────────────────
+
+  get portfolioDailyChange(): number {
+    if (!this.portfolioData?.totalValue || !this.marketSummary?.variationMoyenne) return 0;
+    return this.portfolioData.totalValue * (Number(this.marketSummary.variationMoyenne) / 100);
+  }
+
+  get portfolioDailyChangePct(): number {
+    return Number(this.marketSummary?.variationMoyenne) || 0;
+  }
+
+  // Mini sparkline (last 6 points of evolution)
+  get sparklineData(): any[] {
+    const ev = this.portfolioData?.evolutionData || [];
+    return ev.slice(-6);
+  }
+
+  sparklinePath(h = 40, w = 120): string {
+    const data = this.sparklineData;
+    if (data.length < 2) return '';
+    const vals = data.map((d: any) => Number(d.value));
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    return data.map((d: any, i: number) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((Number(d.value) - min) / range) * (h - 6) - 3;
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  sparklineAreaPath(h = 40, w = 120): string {
+    const data = this.sparklineData;
+    if (data.length < 2) return '';
+    const vals = data.map((d: any) => Number(d.value));
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    const pts = data.map((d: any, i: number) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((Number(d.value) - min) / range) * (h - 6) - 3;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const last = pts[pts.length - 1].split(',');
+    const first = pts[0].split(',');
+    return `M ${pts.join(' L ')} L ${last[0]} ${h} L ${first[0]} ${h} Z`;
+  }
+
+  // ── Performance chart (portfolio vs benchmark) ──────────────────────────────
+
+  setPerformancePeriod(p: '1M' | '3M' | '6M' | '1Y'): void {
+    this.performancePeriod = p;
+  }
+
+  get filteredEvolution(): any[] {
+    const ev: any[] = this.portfolioData?.evolutionData || [];
+    const limits: Record<string, number> = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12 };
+    const n = limits[this.performancePeriod] || 12;
+    return ev.slice(-n);
+  }
+
+  get benchmarkPoints(): { month: string; value: number }[] {
+    const evo = this.filteredEvolution;
+    if (!evo.length || !this.marketPerf.length) return [];
+
+    const startValue = evo[0]?.value || 100000;
+    const perfMap = new Map<string, number>(
+      this.marketPerf.map((m: any) => [m.month as string, Number(m.avg_variation)])
+    );
+
+    let benchVal = startValue;
+    return evo.map((e: any) => {
+      const variation = perfMap.get(e.month) ?? 0;
+      benchVal = benchVal * (1 + variation / 100);
+      return { month: e.month, value: benchVal };
     });
   }
+
+  // SVG path helpers for dual-line performance chart
+  private perfPt(data: any[], i: number, W: number, H: number, min: number, max: number): { x: number; y: number } {
+    const range = max - min || 1;
+    return {
+      x: (i / Math.max(data.length - 1, 1)) * W,
+      y: H - ((data[i].value - min) / range) * (H - 12) - 6
+    };
+  }
+
+  private perfMinMax(a: any[], b: any[]): { min: number; max: number } {
+    const allVals = [...a, ...b].map(d => Number(d.value));
+    if (!allVals.length) return { min: 0, max: 1 };
+    return {
+      min: Math.min(...allVals) * 0.97,
+      max: Math.max(...allVals) * 1.02
+    };
+  }
+
+  perfPortfolioPath(W = 560, H = 130): string {
+    const data = this.filteredEvolution;
+    if (data.length < 2) return '';
+    const { min, max } = this.perfMinMax(data, this.benchmarkPoints);
+    return data.map((_, i) => {
+      const p = this.perfPt(data, i, W, H, min, max);
+      return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  perfPortfolioAreaPath(W = 560, H = 130): string {
+    const data = this.filteredEvolution;
+    if (data.length < 2) return '';
+    const { min, max } = this.perfMinMax(data, this.benchmarkPoints);
+    const pts = data.map((_, i) => this.perfPt(data, i, W, H, min, max));
+    const last = pts[pts.length - 1];
+    const first = pts[0];
+    return `M ${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')} L ${last.x.toFixed(1)} ${H} L ${first.x.toFixed(1)} ${H} Z`;
+  }
+
+  perfBenchmarkPath(W = 560, H = 130): string {
+    const data = this.benchmarkPoints;
+    const evo  = this.filteredEvolution;
+    if (data.length < 2) return '';
+    const { min, max } = this.perfMinMax(evo, data);
+    return data.map((_, i) => {
+      const p = this.perfPt(data, i, W, H, min, max);
+      return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  get perfXLabels(): { x: number; label: string }[] {
+    const data = this.filteredEvolution;
+    if (!data.length) return [];
+    const W = 560;
+    const step = data.length > 6 ? Math.ceil(data.length / 6) : 1;
+    return data
+      .map((d, i) => ({ d, i }))
+      .filter(({ i }) => i % step === 0 || i === data.length - 1)
+      .map(({ d, i }) => ({
+        x: (i / Math.max(data.length - 1, 1)) * W,
+        label: d.month
+      }));
+  }
+
+  get perfYLabels(): { y: number; label: string }[] {
+    const data = this.filteredEvolution;
+    const bench = this.benchmarkPoints;
+    if (!data.length) return [];
+    const H = 130;
+    const { min, max } = this.perfMinMax(data, bench);
+    return [0, 0.25, 0.5, 0.75, 1].map(s => {
+      const val = min + (max - min) * s;
+      const y   = H - s * (H - 12) - 6;
+      return { y, label: val >= 1000 ? Math.round(val / 1000) + 'k' : Math.round(val).toString() };
+    });
+  }
+
+  // ── Signal helpers ──────────────────────────────────────────────────────────
 
   getSignalClass(signal: string): string {
     if (!signal) return 'signal-hold';
@@ -107,17 +333,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'Conserver';
   }
 
+  getConfidence(signal: any): number {
+    const dominant = signal.globalSignal?.toLowerCase() || '';
+    const aligned = [signal.signal_rsi, signal.signal_macd, signal.signal_bb]
+      .filter(s => s?.toLowerCase() === dominant).length;
+    const rsi = Number(signal.rsi_14);
+    const rsiBonus = !isNaN(rsi) && (rsi < 30 || rsi > 70) ? 5 : 0;
+    if (aligned === 3) return Math.min(88 + rsiBonus, 96);
+    if (aligned === 2) return Math.min(68 + rsiBonus, 82);
+    return Math.min(48 + rsiBonus, 62);
+  }
+
+  // ── Formatting helpers ──────────────────────────────────────────────────────
+
   getVariationClass(val: any): string {
-    const num = Number.parseFloat(val);
-    if (num > 0) return 'positive';
-    if (num < 0) return 'negative';
-    return '';
+    const n = Number.parseFloat(val);
+    return n > 0 ? 'positive' : n < 0 ? 'negative' : '';
   }
 
   formatVariation(val: any): string {
-    const num = Number.parseFloat(val);
-    if (Number.isNaN(num)) return '0.00%';
-    return (num > 0 ? '+' : '') + num.toFixed(2) + '%';
+    const n = Number.parseFloat(val);
+    if (Number.isNaN(n)) return '0.00%';
+    return (n > 0 ? '+' : '') + n.toFixed(2) + '%';
+  }
+
+  formatCurrency(val: number): string {
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val) + ' €';
   }
 
   getInitials(symbol: string): string {
@@ -125,9 +366,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return symbol.substring(0, 2).toUpperCase();
   }
 
+  // ── Donut helpers ───────────────────────────────────────────────────────────
+
+  donutDashArray(count: number, total: number): string {
+    const circ = 251.2;
+    if (!total) return `0 ${circ}`;
+    const arc = (count / total) * circ;
+    return `${arc.toFixed(2)} ${(circ - arc).toFixed(2)}`;
+  }
+
+  donutDashOffset(priorCount: number, total: number): number {
+    if (!total) return 62.8;
+    return 62.8 - (priorCount / total) * 251.2;
+  }
+
+  // ── SVG line/area chart helpers (300×100 viewBox) ──────────────────────────
+
+  private pt(data: any[], key: string, i: number, w = 300, h = 100): { x: number; y: number } {
+    const vals = data.map(d => Number(d[key]));
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    return {
+      x: (i / (data.length - 1)) * w,
+      y: h - ((vals[i] - min) / range) * (h - 10) - 5
+    };
+  }
+
+  linePath(data: any[], key: string): string {
+    if (!data || data.length < 2) return '';
+    return data.map((_, i) => {
+      const p = this.pt(data, key, i);
+      return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  areaPath(data: any[], key: string, h = 100): string {
+    if (!data || data.length < 2) return '';
+    const line = this.linePath(data, key);
+    const last  = this.pt(data, key, data.length - 1);
+    const first = this.pt(data, key, 0);
+    return `${line} L ${last.x.toFixed(1)} ${h} L ${first.x.toFixed(1)} ${h} Z`;
+  }
+
+  xLabels(data: any[], dateKey = 'date'): { x: number; label: string }[] {
+    if (!data || !data.length) return [];
+    const indices = [0, Math.floor(data.length / 2), data.length - 1];
+    return indices.map(i => ({
+      x: (i / (data.length - 1)) * 300,
+      label: (data[i][dateKey] as string || '').slice(5)
+    }));
+  }
+
+  maxVolatility(): number {
+    if (!this.marketVolatility.length) return 1;
+    return Math.max(...this.marketVolatility.map(d => Number(d['avgVolatility']))) || 1;
+  }
+
+  volBarWidth(v: any): number {
+    return (Number(v['avgVolatility']) / this.maxVolatility()) * 100;
+  }
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+
   navigateTo(nav: string): void {
     this.activeNav = nav;
     if (nav === 'portfolio') this.router.navigate(['/portfolio']);
+    if (nav === 'ia')        this.router.navigate(['/assistant']);
     if (nav === 'profil')    this.router.navigate(['/profile']);
     if (nav === 'settings')  this.router.navigate(['/settings']);
   }

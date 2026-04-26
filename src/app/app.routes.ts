@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/pages/dashboard/dashboard';
 import { ProfileComponent } from './components/pages/profile/profile';
 import { PortfolioComponent } from './components/pages/portfolio/portfolio';
 import { SettingsComponent } from './components/pages/settings/settings';
+import { AssistantComponent } from './components/pages/assistant/assistant';
 import { AdminSupervisionComponent } from './components/admin/supervision/admin-supervision';
 import { AdminUsersComponent } from './components/admin/users/admin-users';
 
@@ -15,6 +16,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'dashboard', component: DashboardComponent },
+  { path: 'assistant', component: AssistantComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'portfolio', component: PortfolioComponent },
   { path: 'settings', component: SettingsComponent },

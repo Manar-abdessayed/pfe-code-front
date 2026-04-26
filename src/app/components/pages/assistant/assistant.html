@@ -1,0 +1,216 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.8"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav==='dashboard'" (click)="navigateTo('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='ia'" (click)="navigateTo('ia')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Assistant IA</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='portfolio'" (click)="navigateTo('portfolio')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Portefeuille</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='profil'" (click)="navigateTo('profil')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Profil</span>
+      </a>
+    </nav>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Assistant IA</h1>
+        <p class="page-sub">Posez vos questions sur l'investissement et la bourse</p>
+      </div>
+      <div class="topbar-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          IA en ligne
+        </div>
+        <div class="user-menu-wrapper">
+          <button class="user-avatar" (click)="toggleUserMenu($event)">{{ getInitialsUser() }}</button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="user-dropdown-header">
+              <span class="user-dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+              <span class="user-dropdown-email">{{ currentUser?.email }}</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item user-dropdown-logout" (click)="logout()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CHAT AREA -->
+    <div class="chat-page">
+      <div class="chat-card">
+
+        <!-- Chat header -->
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <div class="bot-avatar-lg">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <div class="bot-header-info">
+              <span class="bot-name">InvestAI Sophia</span>
+              <span class="bot-status">
+                <span class="bot-status-dot"></span>
+                En ligne
+              </span>
+            </div>
+          </div>
+          <div class="chat-header-right">
+            <span class="powered-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Powered by n8n · GPT
+            </span>
+            <button class="clear-btn" (click)="clearHistory()" title="Effacer la conversation">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages-area">
+
+          <!-- History loading -->
+          <div class="history-loading" *ngIf="historyLoading">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            <span>Chargement de l'historique...</span>
+          </div>
+
+          <div *ngIf="!historyLoading">
+            <div *ngFor="let msg of messages"
+                 class="message-row"
+                 [class.msg-bot]="msg.role === 'bot'"
+                 [class.msg-user]="msg.role === 'user'">
+
+              <!-- Bot message -->
+              <ng-container *ngIf="msg.role === 'bot'">
+                <div class="bot-avatar-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                </div>
+                <div class="bubble-wrap">
+                  <div class="bubble bubble-bot" [innerHTML]="formatContent(msg.content)"></div>
+                  <span class="msg-time">{{ formatTime(msg.createdAt) }}</span>
+                </div>
+              </ng-container>
+
+              <!-- User message -->
+              <ng-container *ngIf="msg.role === 'user'">
+                <div class="bubble-wrap bubble-wrap-user">
+                  <div class="bubble bubble-user">{{ msg.content }}</div>
+                  <span class="msg-time msg-time-user">{{ formatTime(msg.createdAt) }}</span>
+                </div>
+                <div class="user-avatar-sm">{{ getInitialsUser() }}</div>
+              </ng-container>
+            </div>
+
+            <!-- Typing indicator -->
+            <div class="message-row msg-bot" *ngIf="isTyping">
+              <div class="bot-avatar-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <div class="bubble-wrap">
+                <div class="bubble bubble-bot typing-bubble">
+                  <div class="typing-dots"><span></span><span></span><span></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div #messagesEnd></div>
+        </div>
+
+        <!-- Quick suggestions -->
+        <div class="suggestions" *ngIf="!isTyping">
+          <button class="suggestion-chip"
+                  *ngFor="let s of suggestions"
+                  (click)="useSuggestion(s)">
+            {{ s }}
+          </button>
+        </div>
+
+        <!-- Input -->
+        <div class="input-area">
+          <textarea class="chat-input"
+                    [(ngModel)]="userInput"
+                    (keydown)="onEnter($event)"
+                    placeholder="Posez votre question..."
+                    rows="1"
+                    [disabled]="isTyping"></textarea>
+          <button class="send-btn" (click)="send()" [disabled]="!userInput.trim() || isTyping">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Les recommandations sont générées par IA et ne constituent pas un conseil financier personnalisé.
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

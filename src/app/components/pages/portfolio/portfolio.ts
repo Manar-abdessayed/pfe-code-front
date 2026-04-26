@@ -1,12 +1,15 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { Auth } from '../../../services/auth';
 import {
   PortfolioService,
   PortfolioData,
   PositionItem,
+  TradingInstrument,
+  Transaction,
 } from '../../../services/portfolio';
 
 interface DonutSegment {
@@ -23,13 +26,16 @@ interface DonutSegment {
   templateUrl: './portfolio.html',
   styleUrls: ['./portfolio.css'],
 })
-export class PortfolioComponent implements OnInit {
+export class PortfolioComponent implements OnInit, OnDestroy {
   currentUser: any = null;
   portfolioData: PortfolioData | null = null;
   isLoading = true;
   sidebarCollapsed = false;
   activeNav = 'portfolio';
   userMenuOpen = false;
+  activeTab: 'positions' | 'transactions' = 'positions';
+
+  // ── Manual add/edit modal ──────────────────────────────────────────────────
   showModal = false;
   editingPosition: PositionItem | null = null;
   isSaving = false;
@@ -46,6 +52,37 @@ export class PortfolioComponent implements OnInit {
     purchaseDate: new Date().toISOString().split('T')[0],
   };
 
+  // ── Buy modal ──────────────────────────────────────────────────────────────
+  showBuyModal = false;
+  buySearchQuery = '';
+  buyInstruments: TradingInstrument[] = [];
+  buySearchLoading = false;
+  selectedInstrument: TradingInstrument | null = null;
+  buyForm = { quantity: 1, price: 0, sector: 'Technologie', assetClass: 'Actions' };
+  isBuying = false;
+  buyError = '';
+
+  private readonly buySearch$ = new Subject<string>();
+
+  // ── Sell modal ─────────────────────────────────────────────────────────────
+  showSellModal = false;
+  sellingPosition: PositionItem | null = null;
+  sellForm = { quantity: 1, price: 0 };
+  isSelling = false;
+  sellError = '';
+
+  // ── Transactions ───────────────────────────────────────────────────────────
+  transactions: Transaction[] = [];
+  transactionsLoading = false;
+
+  // ── Detail modal ───────────────────────────────────────────────────────────
+  showDetailModal = false;
+  detailPosition: PositionItem | null = null;
+  detailAnalysis: any = null;
+  detailLoading = false;
+
+  private readonly destroy$ = new Subject<void>();
+
   readonly sectors = [
     'Technologie', 'Finance', 'Énergie', 'Santé',
     'Consommation', 'Industrie', 'Autres',
@@ -59,6 +96,7 @@ export class PortfolioComponent implements OnInit {
 
   private readonly navRoutes: Record<string, string> = {
     dashboard: '/dashboard',
+    ia:        '/assistant',
     portfolio: '/portfolio',
     profil:    '/profile',
     settings:  '/settings',
@@ -99,8 +137,21 @@ export class PortfolioComponent implements OnInit {
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) { this.router.navigate(['/login']); return; }
+
     this.loadPortfolio();
+
+    // Debounce instrument search in buy modal
+    this.buySearch$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(q => this.fetchInstruments(q));
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Portfolio loading ──────────────────────────────────────────────────────
 
   loadPortfolio(): void {
     this.isLoading = true;
@@ -113,7 +164,7 @@ export class PortfolioComponent implements OnInit {
       error: () => {
         this.portfolioData = {
           positions: [], totalValue: 0, totalCost: 0,
-          totalPL: 0, totalPLPercent: 0,
+          totalPL: 0, totalPLPercent: 0, availableCapital: 0,
           sectorBreakdown: [], assetClassBreakdown: [], evolutionData: [],
         };
         this.isLoading = false;
@@ -121,6 +172,270 @@ export class PortfolioComponent implements OnInit {
     });
   }
 
+  switchTab(tab: 'positions' | 'transactions'): void {
+    this.activeTab = tab;
+    if (tab === 'transactions' && this.transactions.length === 0) {
+      this.loadTransactions();
+    }
+  }
+
+  loadTransactions(): void {
+    this.transactionsLoading = true;
+    this.portfolioService.getTransactions(this.currentUser.id).subscribe({
+      next: (txs) => { this.transactions = txs; this.transactionsLoading = false; },
+      error: () => { this.transactionsLoading = false; },
+    });
+  }
+
+  // ── Buy modal ──────────────────────────────────────────────────────────────
+
+  openBuyModal(): void {
+    this.showBuyModal = true;
+    this.buySearchQuery = '';
+    this.buyInstruments = [];
+    this.selectedInstrument = null;
+    this.buyForm = { quantity: 1, price: 0, sector: 'Technologie', assetClass: 'Actions' };
+    this.buyError = '';
+    this.fetchInstruments('');
+  }
+
+  closeBuyModal(): void {
+    this.showBuyModal = false;
+    this.selectedInstrument = null;
+    this.buyError = '';
+  }
+
+  onBuySearchInput(): void {
+    this.buySearch$.next(this.buySearchQuery);
+  }
+
+  private fetchInstruments(q: string): void {
+    this.buySearchLoading = true;
+    this.portfolioService.getInstruments(q || undefined).subscribe({
+      next: (instruments) => {
+        this.buyInstruments = instruments;
+        this.buySearchLoading = false;
+      },
+      error: () => { this.buySearchLoading = false; },
+    });
+  }
+
+  selectInstrument(inst: TradingInstrument): void {
+    this.selectedInstrument = inst;
+    this.buyForm.price = inst.close_price ?? 0;
+    this.buyError = '';
+  }
+
+  clearSelection(): void {
+    this.selectedInstrument = null;
+  }
+
+  get buyTotal(): number {
+    return this.buyForm.quantity * this.buyForm.price;
+  }
+
+  get availableCapital(): number {
+    return this.portfolioData?.availableCapital ?? 0;
+  }
+
+  get totalCapital(): number {
+    return (this.portfolioData?.totalValue ?? 0) + this.availableCapital;
+  }
+
+  get stocksPercent(): number {
+    if (this.totalCapital <= 0) return 0;
+    return (this.portfolioData?.totalValue ?? 0) / this.totalCapital * 100;
+  }
+
+  get liquidityPercent(): number {
+    return 100 - this.stocksPercent;
+  }
+
+  get budgetExceeded(): boolean {
+    return this.buyTotal > this.availableCapital + 1e-9;
+  }
+
+  submitBuy(): void {
+    if (!this.currentUser || !this.selectedInstrument) return;
+    if (this.buyForm.quantity <= 0) {
+      this.buyError = 'La quantité doit être positive.';
+      return;
+    }
+    if (this.buyForm.price <= 0) {
+      this.buyError = 'Le prix doit être positif.';
+      return;
+    }
+    if (this.budgetExceeded) {
+      this.buyError = `Budget insuffisant. Disponible : ${this.formatCurrency(this.availableCapital)} — Requis : ${this.formatCurrency(this.buyTotal)}`;
+      return;
+    }
+
+    this.isBuying = true;
+    this.buyError = '';
+
+    this.portfolioService.buyStock(this.currentUser.id, {
+      symbol: this.selectedInstrument.short_name,
+      companyName: this.selectedInstrument.full_name,
+      quantity: this.buyForm.quantity,
+      price: this.buyForm.price,
+      sector: this.buyForm.sector,
+      assetClass: this.buyForm.assetClass,
+    }).subscribe({
+      next: (data) => {
+        this.portfolioData = data;
+        this.computeDonutSegments();
+        this.transactions = [];
+        this.isBuying = false;
+        this.closeBuyModal();
+      },
+      error: (err) => {
+        this.buyError = err?.error?.message || 'Erreur lors de l\'achat.';
+        this.isBuying = false;
+      },
+    });
+  }
+
+  // ── Sell modal ─────────────────────────────────────────────────────────────
+
+  openSellModal(pos: PositionItem): void {
+    this.sellingPosition = pos;
+    this.sellForm = { quantity: 1, price: pos.currentPrice };
+    this.sellError = '';
+    this.showSellModal = true;
+  }
+
+  closeSellModal(): void {
+    this.showSellModal = false;
+    this.sellingPosition = null;
+    this.sellError = '';
+  }
+
+  get sellTotal(): number {
+    return this.sellForm.quantity * this.sellForm.price;
+  }
+
+  submitSell(): void {
+    if (!this.currentUser || !this.sellingPosition) return;
+    if (this.sellForm.quantity <= 0) {
+      this.sellError = 'La quantité doit être positive.';
+      return;
+    }
+    if (this.sellForm.quantity > this.sellingPosition.quantity) {
+      this.sellError = `Quantité max : ${this.sellingPosition.quantity}`;
+      return;
+    }
+    if (this.sellForm.price <= 0) {
+      this.sellError = 'Le prix doit être positif.';
+      return;
+    }
+
+    this.isSelling = true;
+    this.sellError = '';
+
+    this.portfolioService.sellStock(this.currentUser.id, {
+      positionId: this.sellingPosition.id,
+      quantity: this.sellForm.quantity,
+      price: this.sellForm.price,
+    }).subscribe({
+      next: (data) => {
+        this.portfolioData = data;
+        this.computeDonutSegments();
+        this.transactions = [];
+        this.isSelling = false;
+        this.closeSellModal();
+      },
+      error: (err) => {
+        this.sellError = err?.error?.message || 'Erreur lors de la vente.';
+        this.isSelling = false;
+      },
+    });
+  }
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+
+  openDetailModal(pos: PositionItem): void {
+    this.detailPosition = pos;
+    this.detailAnalysis = null;
+    this.detailLoading = true;
+    this.showDetailModal = true;
+    this.portfolioService.getPositionAnalysis(pos.symbol).subscribe({
+      next: (data) => { this.detailAnalysis = data; this.detailLoading = false; },
+      error: ()     => { this.detailLoading = false; },
+    });
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.detailPosition = null;
+  }
+
+  signalClass(signal: string): string {
+    if (!signal) return '';
+    const s = signal.toLowerCase();
+    if (s.includes('haussier') || s === 'achat') return 'signal-bull';
+    if (s.includes('baissier') || s === 'vente') return 'signal-bear';
+    return 'signal-neutral';
+  }
+
+  recoClass(reco: string): string {
+    if (!reco) return '';
+    const r = reco.toLowerCase();
+    if (r === 'acheter') return 'reco-buy';
+    if (r === 'vendre')  return 'reco-sell';
+    return 'reco-hold';
+  }
+
+  // ── Manual add/edit modal ──────────────────────────────────────────────────
+
+  openAddModal(): void {
+    this.editingPosition = null;
+    this.form = {
+      symbol: '', companyName: '',
+      quantity: 1, purchasePrice: 0, currentPrice: 0,
+      sector: 'Technologie', assetClass: 'Actions',
+      purchaseDate: new Date().toISOString().split('T')[0],
+    };
+    this.showModal = true;
+  }
+
+  openEditModal(pos: PositionItem): void {
+    this.editingPosition = pos;
+    this.form = {
+      symbol: pos.symbol, companyName: pos.companyName,
+      quantity: pos.quantity, purchasePrice: pos.purchasePrice,
+      currentPrice: pos.currentPrice, sector: pos.sector,
+      assetClass: pos.assetClass, purchaseDate: pos.purchaseDate,
+    };
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.editingPosition = null;
+  }
+
+  submitForm(): void {
+    if (!this.currentUser) return;
+    this.isSaving = true;
+    const obs = this.editingPosition
+      ? this.portfolioService.updatePosition(this.currentUser.id, this.editingPosition.id, { ...this.form })
+      : this.portfolioService.addPosition(this.currentUser.id, { ...this.form });
+
+    obs.subscribe({
+      next: () => { this.closeModal(); this.loadPortfolio(); this.isSaving = false; },
+      error: () => { this.isSaving = false; },
+    });
+  }
+
+  deletePosition(positionId: string): void {
+    if (!this.currentUser || !confirm('Supprimer cette position ?')) return;
+    this.portfolioService.deletePosition(this.currentUser.id, positionId).subscribe({
+      next: () => this.loadPortfolio(),
+      error: (err) => console.error('Erreur suppression position', err),
+    });
+  }
+
+  // ── Charts ─────────────────────────────────────────────────────────────────
 
   computeDonutSegments(): void {
     const breakdown = this.portfolioData?.sectorBreakdown || [];
@@ -136,7 +451,6 @@ export class PortfolioComponent implements OnInit {
       return seg;
     });
   }
-
 
   private chartPoint(idx: number, val: number, total: number, minV: number, maxV: number) {
     const w = this.CHART_W - this.PAD_L - this.PAD_R;
@@ -213,55 +527,7 @@ export class PortfolioComponent implements OnInit {
     return val.toFixed(0);
   }
 
-
-  openAddModal(): void {
-    this.editingPosition = null;
-    this.form = {
-      symbol: '', companyName: '',
-      quantity: 1, purchasePrice: 0, currentPrice: 0,
-      sector: 'Technologie', assetClass: 'Actions',
-      purchaseDate: new Date().toISOString().split('T')[0],
-    };
-    this.showModal = true;
-  }
-
-  openEditModal(pos: PositionItem): void {
-    this.editingPosition = pos;
-    this.form = {
-      symbol: pos.symbol, companyName: pos.companyName,
-      quantity: pos.quantity, purchasePrice: pos.purchasePrice,
-      currentPrice: pos.currentPrice, sector: pos.sector,
-      assetClass: pos.assetClass, purchaseDate: pos.purchaseDate,
-    };
-    this.showModal = true;
-  }
-
-  closeModal(): void {
-    this.showModal = false;
-    this.editingPosition = null;
-  }
-
-  submitForm(): void {
-    if (!this.currentUser) return;
-    this.isSaving = true;
-    const obs = this.editingPosition
-      ? this.portfolioService.updatePosition(this.currentUser.id, this.editingPosition.id, { ...this.form })
-      : this.portfolioService.addPosition(this.currentUser.id, { ...this.form });
-
-    obs.subscribe({
-      next: () => { this.closeModal(); this.loadPortfolio(); this.isSaving = false; },
-      error: () => { this.isSaving = false; },
-    });
-  }
-
-  deletePosition(positionId: string): void {
-    if (!this.currentUser || !confirm('Supprimer cette position ?')) return;
-    this.portfolioService.deletePosition(this.currentUser.id, positionId).subscribe({
-      next: () => this.loadPortfolio(),
-      error: (err) => console.error('Erreur suppression position', err),
-    });
-  }
-
+  // ── Export ─────────────────────────────────────────────────────────────────
 
   exportCSV(): void {
     const positions = this.portfolioData?.positions;
@@ -282,6 +548,7 @@ export class PortfolioComponent implements OnInit {
     a.remove(); URL.revokeObjectURL(url);
   }
 
+  // ── Utilities ──────────────────────────────────────────────────────────────
 
   getInitials(symbol: string): string {
     return (symbol || '??').substring(0, 2).toUpperCase();
@@ -310,9 +577,7 @@ export class PortfolioComponent implements OnInit {
   }
 
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
-
   toggleUserMenu(e: MouseEvent): void { e.stopPropagation(); this.userMenuOpen = !this.userMenuOpen; }
-
   logout(): void { this.authService.logout(); this.router.navigate(['/login']); }
 
   navigateTo(nav: string): void {
