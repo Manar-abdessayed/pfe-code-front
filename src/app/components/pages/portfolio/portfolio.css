@@ -54,6 +54,37 @@
   margin-top: 4px;
 }
 
+.switch-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.switch-mode-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+.app-layout.sidebar-collapsed .switch-mode-btn {
+  padding: 10px 0;
+}
+.app-layout.sidebar-collapsed .switch-mode-btn span {
+  display: none;
+}
+
 .sidebar-toggle {
   margin: 0 10px; padding: 8px;
   background: rgba(255,255,255,0.06); border: none;

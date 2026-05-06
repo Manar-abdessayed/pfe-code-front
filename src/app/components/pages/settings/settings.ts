@@ -164,6 +164,10 @@ export class SettingsComponent implements OnInit {
     return (f + l).toUpperCase();
   }
 
+  switchToAdminMode(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
 
   toggleUserMenu(e: MouseEvent): void { e.stopPropagation(); this.userMenuOpen = !this.userMenuOpen; }

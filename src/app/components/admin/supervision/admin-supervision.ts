@@ -75,8 +75,7 @@ export class AdminSupervisionComponent implements OnInit, OnDestroy {
         this.chartLoading = false;
       },
       error: () => {
-        // Fallback to realistic simulated data if endpoint unavailable
-        this.userActivityData = this.buildFallbackActivityData();
+        this.userActivityData = [];
         this.chartLoading = false;
       },
     });

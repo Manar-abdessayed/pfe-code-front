@@ -198,6 +198,10 @@ export class AssistantComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (route) this.router.navigate([route]);
   }
 
+  switchToAdminMode(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
   toggleUserMenu(e: MouseEvent): void { e.stopPropagation(); this.userMenuOpen = !this.userMenuOpen; }
   logout(): void { this.auth.logout(); this.router.navigate(['/login']); }

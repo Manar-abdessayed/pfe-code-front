@@ -9,6 +9,7 @@ import { SettingsComponent } from './components/pages/settings/settings';
 import { AssistantComponent } from './components/pages/assistant/assistant';
 import { AdminSupervisionComponent } from './components/admin/supervision/admin-supervision';
 import { AdminUsersComponent } from './components/admin/users/admin-users';
+import { AdminConfigComponent } from './components/admin/config/admin-config';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -22,4 +23,5 @@ export const routes: Routes = [
   { path: 'settings', component: SettingsComponent },
   { path: 'admin', component: AdminSupervisionComponent },
   { path: 'admin/users', component: AdminUsersComponent },
+  { path: 'admin/config', component: AdminConfigComponent },
 ];

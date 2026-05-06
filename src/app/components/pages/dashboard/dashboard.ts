@@ -436,6 +436,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (nav === 'settings')  this.router.navigate(['/settings']);
   }
 
+  switchToAdminMode(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
 
   toggleUserMenu(event: MouseEvent): void {

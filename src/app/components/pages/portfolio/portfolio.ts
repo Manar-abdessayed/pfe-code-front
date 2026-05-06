@@ -609,6 +609,10 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     return val >= 0 ? 'positive' : 'negative';
   }
 
+  switchToAdminMode(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
   toggleUserMenu(e: MouseEvent): void { e.stopPropagation(); this.userMenuOpen = !this.userMenuOpen; }
   logout(): void { this.authService.logout(); this.router.navigate(['/login']); }

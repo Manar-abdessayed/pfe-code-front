@@ -175,6 +175,10 @@ export class ProfileComponent implements OnInit {
     return ((parts[0]?.[0] || '') + (last[0] || '')).toUpperCase();
   }
 
+  switchToAdminMode(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }

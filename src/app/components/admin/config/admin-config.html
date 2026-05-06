@@ -1,0 +1,213 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.9"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <div class="admin-badge" *ngIf="!sidebarCollapsed">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      Espace Admin
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav==='supervision'" (click)="navigateTo('supervision')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Supervision</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='users'" (click)="navigateTo('users')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Utilisateurs</span>
+      </a>
+      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Validation</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav==='config'" (click)="navigateTo('config')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Configuration</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="switch-mode-btn" (click)="switchToUserMode()" [title]="sidebarCollapsed ? 'Mode utilisateur' : ''">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Mode utilisateur</span>
+      </button>
+    </div>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span>Configuration</span>
+      </div>
+      <div class="topbar-center"></div>
+      <div class="topbar-right">
+        <div class="user-menu-wrapper">
+          <button class="user-avatar" (click)="toggleUserMenu($event)">{{ getAdminInitials() }}</button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="user-dropdown-header">
+              <span class="user-dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+              <span class="user-dropdown-email">{{ currentUser?.email }}</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item" (click)="navigateTo('profil')">Mon profil</button>
+            <button class="user-dropdown-item" (click)="navigateTo('settings')">Paramètres</button>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item user-dropdown-logout" (click)="logout()">Déconnexion</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+      <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h1>Configuration système</h1>
+          <p class="page-sub">Gérer les paramètres globaux de l'application</p>
+        </div>
+        <button class="btn-primary" [disabled]="isSaving" (click)="saveConfig()">
+          {{ isSaving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+        </button>
+      </div>
+
+      <!-- LOADING -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement de la configuration...</p>
+      </div>
+
+      <!-- CONFIG GRID -->
+      <div class="config-grid" *ngIf="!isLoading && config">
+        
+        <div class="config-card">
+          <div class="config-card-header">
+            <h3>Général</h3>
+            <p>Paramètres de base de l'application</p>
+          </div>
+          <div class="form-group">
+            <label>Mode maintenance</label>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="config.maintenanceMode">
+              <span class="slider round"></span>
+            </label>
+            <div class="form-hint">Bloque l'accès à tous les utilisateurs non-administrateurs.</div>
+          </div>
+          <div class="form-group">
+            <label>Expiration de session (minutes)</label>
+            <input type="number" [(ngModel)]="config.sessionTimeoutMinutes">
+          </div>
+          <div class="form-group">
+            <label>Niveau de journalisation</label>
+            <select [(ngModel)]="config.logLevel">
+              <option value="DEBUG">DEBUG</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-header">
+            <h3>Finance & Marché</h3>
+            <p>Données et paramètres d'investissement</p>
+          </div>
+          <div class="form-group">
+            <label>Rafraîchissement des données (sec)</label>
+            <input type="number" [(ngModel)]="config.marketDataRefreshInterval">
+          </div>
+          <div class="form-group">
+            <label>Profil de risque par défaut</label>
+            <select [(ngModel)]="config.defaultRiskLevel">
+              <option [ngValue]="1">1 - Très prudent</option>
+              <option [ngValue]="3">3 - Prudent</option>
+              <option [ngValue]="5">5 - Équilibré</option>
+              <option [ngValue]="8">8 - Dynamique</option>
+              <option [ngValue]="10">10 - Agressif</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-header">
+            <h3>Sécurité</h3>
+            <p>Protection contre les abus</p>
+          </div>
+          <div class="form-group">
+            <label>Tentatives de connexion maximales</label>
+            <input type="number" [(ngModel)]="config.maxLoginAttempts">
+            <div class="form-hint">Nombre d'essais avant le blocage temporaire du compte.</div>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-header">
+            <h3>Email (SMTP)</h3>
+            <p>Configuration de l'envoi d'emails</p>
+          </div>
+          <div class="form-group">
+            <label>Activer les notifications email</label>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="config.emailNotificationsEnabled">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Hôte SMTP</label>
+            <input type="text" [(ngModel)]="config.smtpHost">
+          </div>
+          <div class="form-group">
+            <label>Port SMTP</label>
+            <input type="number" [(ngModel)]="config.smtpPort">
+          </div>
+          <div class="form-group">
+            <label>Utilisateur SMTP</label>
+            <input type="text" [(ngModel)]="config.smtpUser">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
