@@ -1,5 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+  --color-dark:     #0f1629;
+  --color-dark-2:   #1e2d4a;
+  --color-amber:    #f59e0b;
+  --color-amber-dk: #d97706;
+  --color-bg:       #f5f6fa;
+  --color-positive: #16a34a;
+  --color-negative: #dc2626;
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:      0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:      0 8px 32px rgba(0,0,0,0.14);
+  --shadow-btn:     0 2px 8px rgba(15,22,41,0.20);
+  --shadow-btn-hover: 0 4px 18px rgba(15,22,41,0.30);
+  --shadow-amber:   0 4px 18px rgba(245,158,11,0.35);
+  --transition:     0.2s cubic-bezier(0.4,0,0.2,1);
+  --radius-sm:      8px;
+  --radius-md:      12px;
+  --radius-lg:      16px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -44,8 +64,13 @@ input {
 /* Shared Auth Form Styles */
 .auth-form-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   margin: 0 auto;
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(15,22,41,0.09);
+  border: 1px solid rgba(220,225,240,0.7);
 }
 
 .auth-header {
@@ -96,15 +121,16 @@ input {
   position: relative;
   display: flex;
   align-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #fafbff;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
 
 .input-wrapper:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #f59e0b;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
 }
 
 .input-icon {
@@ -211,20 +237,29 @@ input {
 .btn-primary {
   width: 100%;
   padding: 0.875rem;
-  background-color: #1e293b;
+  background: linear-gradient(135deg, #1a2745 0%, #0f1629 100%);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  transition: background-color 0.2s;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  box-shadow: 0 4px 15px rgba(15,22,41,0.25);
+  letter-spacing: 0.2px;
 }
 
 .btn-primary:hover {
-  background-color: #0f172a;
+  background: linear-gradient(135deg, #233561 0%, #1a2745 100%);
+  box-shadow: 0 6px 22px rgba(15,22,41,0.35);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(15,22,41,0.2);
 }
 
 .divider-container {
@@ -317,3 +352,59 @@ input {
 .mt-0 { margin-top: 0; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-4 { margin-bottom: 1rem; }
+
+/* ==============================
+   FLOATING ACTION BUTTON (FAB)
+============================== */
+.btn-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--color-dark);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(15,22,41,0.32);
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  z-index: 50;
+}
+.btn-fab:hover {
+  background: var(--color-amber);
+  box-shadow: var(--shadow-amber);
+  transform: translateY(-3px) scale(1.07);
+}
+.btn-fab:active { transform: translateY(-1px) scale(1.02); }
+
+.btn-fab-amber {
+  background: var(--color-amber);
+  box-shadow: var(--shadow-amber);
+}
+.btn-fab-amber:hover {
+  background: var(--color-amber-dk);
+  box-shadow: 0 6px 28px rgba(245,158,11,0.5);
+}
+
+/* ==============================
+   SHARED SCROLLBAR
+============================== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #dde1e9; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b8c0cc; }
+
+/* ==============================
+   SHARED CARD HOVER LIFT
+============================== */
+.card-hover {
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}

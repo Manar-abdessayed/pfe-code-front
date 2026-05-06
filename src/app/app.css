@@ -4,41 +4,78 @@
   width: 100%;
 }
 
+/* ========================
+   AUTH SIDEBAR (left panel)
+======================== */
 .auth-sidebar {
   flex: 1;
   max-width: 50%;
-  background-color: #0c1a32;
+  background: linear-gradient(145deg, #0b1628 0%, #1a3358 45%, #0f1f3d 100%);
   color: white;
   padding: 4rem;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Decorative circles */
+.auth-sidebar::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: rgba(245,158,11,0.07);
+  pointer-events: none;
+}
+.auth-sidebar::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -60px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(59,130,246,0.06);
+  pointer-events: none;
+}
+
+/* ========================
+   AUTH CONTENT (right panel / form)
+======================== */
 .auth-content {
   flex: 1;
-  background-color: white;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
 }
 
-
+/* ========================
+   SIDEBAR HEADER
+======================== */
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 4rem;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-icon {
-  background: linear-gradient(135deg, #ffc107, #ff9800);
-  color: #0c1a32;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
   padding: 0.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35);
 }
 
 .brand h2 {
@@ -49,21 +86,28 @@
 
 .brand p {
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.5);
 }
 
+/* ========================
+   FEATURES CARD
+======================== */
 .features-card {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
   padding: 2rem;
   margin-bottom: auto;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(4px);
 }
 
 .features-card h3 {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 1.5rem;
+  color: white;
 }
 
 .feature-item {
@@ -77,9 +121,9 @@
 }
 
 .feature-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,35 +131,47 @@
 }
 
 .icon-green {
-  background-color: rgba(16, 185, 129, 0.25);
+  background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.12));
   color: #6ee7b7;
+  box-shadow: 0 0 12px rgba(16,185,129,0.2);
 }
 
 .icon-orange {
-  background-color: rgba(245, 158, 11, 0.25);
+  background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(245,158,11,0.12));
   color: #fde68a;
+  box-shadow: 0 0 12px rgba(245,158,11,0.2);
 }
 
 .icon-blue {
-  background-color: rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(59,130,246,0.12));
   color: #93c5fd;
+  box-shadow: 0 0 12px rgba(59,130,246,0.2);
 }
 
 .feature-text h4 {
   font-size: 0.9375rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: white;
 }
 
 .feature-text p {
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
 }
 
+/* ========================
+   SIDEBAR STATS
+======================== */
 .sidebar-stats {
   display: flex;
-  gap: 2rem;
+  gap: 2.5rem;
   margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  z-index: 1;
 }
 
 .stat-item {
@@ -126,21 +182,25 @@
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #fbbf24;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-label {
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
 }
 
 @media screen and (max-width: 900px) {
   .app-layout {
     flex-direction: column;
   }
-  
+
   .auth-sidebar {
     max-width: 100%;
-    padding: 2rem;
+    padding: 2.5rem 2rem;
   }
 }

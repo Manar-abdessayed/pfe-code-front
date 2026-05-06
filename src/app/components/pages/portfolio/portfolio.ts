@@ -98,6 +98,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     dashboard: '/dashboard',
     ia:        '/assistant',
     portfolio: '/portfolio',
+    reco:      '/assistant',
     profil:    '/profile',
     settings:  '/settings',
   };
@@ -116,11 +117,11 @@ export class PortfolioComponent implements OnInit, OnDestroy {
   };
 
   readonly CHART_W = 760;
-  readonly CHART_H = 160;
-  readonly PAD_L = 55;
-  readonly PAD_R = 10;
-  readonly PAD_T = 15;
-  readonly PAD_B = 35;
+  readonly CHART_H = 260;
+  readonly PAD_L = 68;
+  readonly PAD_R = 15;
+  readonly PAD_T = 20;
+  readonly PAD_B = 42;
 
   constructor(
     private readonly authService: Auth,
@@ -509,22 +510,54 @@ export class PortfolioComponent implements OnInit, OnDestroy {
       .map(({ d, i }) => ({ x: this.chartPoint(i, 0, data.length, min, max).x, label: d.month }));
   }
 
+  formatYLabel(val: number): string {
+    if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M';
+    if (val >= 1_000) return (val / 1_000).toFixed(1) + 'k';
+    return val.toFixed(0);
+  }
+
   get chartYLabels(): { y: number; label: string }[] {
     const data = this.portfolioData?.evolutionData;
     if (!data?.length) return [];
     const { min, max } = this.chartMinMax;
     const h = this.CHART_H - this.PAD_T - this.PAD_B;
-    return [0, 0.25, 0.5, 0.75, 1].map((s) => {
+    return [0, 0.2, 0.4, 0.6, 0.8, 1].map((s) => {
       const val = min + (max - min) * s;
       const y = this.PAD_T + h - s * h;
       return { y, label: this.formatYLabel(val) };
     });
   }
 
-  formatYLabel(val: number): string {
-    if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M';
-    if (val >= 1_000) return (val / 1_000).toFixed(0) + 'k';
-    return val.toFixed(0);
+  get chartDataPoints(): { x: number; y: number; value: number; label: string }[] {
+    const data = this.portfolioData?.evolutionData;
+    if (!data?.length) return [];
+    const { min, max } = this.chartMinMax;
+    return data.map((d, i) => {
+      const p = this.chartPoint(i, d.value, data.length, min, max);
+      return { x: p.x, y: p.y, value: d.value, label: d.month };
+    });
+  }
+
+  get chartFirstValue(): number {
+    return this.portfolioData?.evolutionData?.[0]?.value ?? 0;
+  }
+
+  get chartLastValue(): number {
+    return this.portfolioData?.evolutionData?.at(-1)?.value ?? 0;
+  }
+
+  get chartChangeAmount(): number {
+    return this.chartLastValue - this.chartFirstValue;
+  }
+
+  get chartChangePct(): number {
+    return this.chartFirstValue > 0
+      ? (this.chartChangeAmount / this.chartFirstValue) * 100
+      : 0;
+  }
+
+  get chartIsPositive(): boolean {
+    return this.chartChangeAmount >= 0;
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────

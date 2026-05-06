@@ -18,6 +18,8 @@ export class ProfileComponent implements OnInit {
   profile: UserProfile | null = null;
   isSaving = false;
   saveSuccess = false;
+  isSavingCapital = false;
+  capitalSuccess = false;
   sidebarCollapsed = false;
   activeNav = 'profil';
   userMenuOpen = false;
@@ -100,6 +102,24 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  saveCapital(): void {
+    if (!this.currentUser) return;
+    this.isSavingCapital = true;
+    this.capitalSuccess = false;
+
+    this.profileService.updateProfile(this.currentUser.id, {
+      availableCapital: this.availableCapital
+    }).subscribe({
+      next: (updated) => {
+        this.profile = updated;
+        this.isSavingCapital = false;
+        this.capitalSuccess = true;
+        setTimeout(() => this.capitalSuccess = false, 3000);
+      },
+      error: () => { this.isSavingCapital = false; }
+    });
+  }
+
   toggleSector(sector: string): void {
     const idx = this.selectedSectors.indexOf(sector);
     if (idx >= 0) {
@@ -172,7 +192,9 @@ export class ProfileComponent implements OnInit {
   navigateTo(nav: string): void {
     this.activeNav = nav;
     if (nav === 'dashboard') this.router.navigate(['/dashboard']);
+    if (nav === 'ia')        this.router.navigate(['/assistant']);
     if (nav === 'portfolio') this.router.navigate(['/portfolio']);
+    if (nav === 'reco')      this.router.navigate(['/assistant']);
     if (nav === 'profil')    this.router.navigate(['/profile']);
     if (nav === 'settings')  this.router.navigate(['/settings']);
   }

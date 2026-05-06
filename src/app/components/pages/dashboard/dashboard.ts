@@ -28,7 +28,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Portfolio (valeur + performance)
   portfolioData: any = null;
-  performancePeriod: '1M' | '3M' | '6M' | '1Y' = '1Y';
+  performancePeriod: '7J' | '15J' | '1M' | '3M' = '1M';
   marketPerf: any[] = [];
   portfolioLoading = true;
 
@@ -209,89 +209,89 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return `M ${pts.join(' L ')} L ${last[0]} ${h} L ${first[0]} ${h} Z`;
   }
 
-  // ── Performance chart (portfolio vs benchmark) ──────────────────────────────
+  // ── Performance chart (% change from period start) ─────────────────────────
 
-  setPerformancePeriod(p: '1M' | '3M' | '6M' | '1Y'): void {
+  setPerformancePeriod(p: '7J' | '15J' | '1M' | '3M'): void {
     this.performancePeriod = p;
   }
 
   get filteredEvolution(): any[] {
     const ev: any[] = this.portfolioData?.evolutionData || [];
-    const limits: Record<string, number> = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12 };
-    const n = limits[this.performancePeriod] || 12;
+    const limits: Record<string, number> = { '7J': 7, '15J': 15, '1M': 30, '3M': 90 };
+    const n = limits[this.performancePeriod] || 30;
     return ev.slice(-n);
   }
 
-  get benchmarkPoints(): { month: string; value: number }[] {
-    const evo = this.filteredEvolution;
-    if (!evo.length || !this.marketPerf.length) return [];
-
-    const startValue = evo[0]?.value || 100000;
-    const perfMap = new Map<string, number>(
-      this.marketPerf.map((m: any) => [m.month as string, Number(m.avg_variation)])
-    );
-
-    let benchVal = startValue;
-    return evo.map((e: any) => {
-      const variation = perfMap.get(e.month) ?? 0;
-      benchVal = benchVal * (1 + variation / 100);
-      return { month: e.month, value: benchVal };
-    });
-  }
-
-  // SVG path helpers for dual-line performance chart
-  private perfPt(data: any[], i: number, W: number, H: number, min: number, max: number): { x: number; y: number } {
-    const range = max - min || 1;
-    return {
-      x: (i / Math.max(data.length - 1, 1)) * W,
-      y: H - ((data[i].value - min) / range) * (H - 12) - 6
-    };
-  }
-
-  private perfMinMax(a: any[], b: any[]): { min: number; max: number } {
-    const allVals = [...a, ...b].map(d => Number(d.value));
-    if (!allVals.length) return { min: 0, max: 1 };
-    return {
-      min: Math.min(...allVals) * 0.97,
-      max: Math.max(...allVals) * 1.02
-    };
-  }
-
-  perfPortfolioPath(W = 560, H = 130): string {
+  // Normalize to % change relative to the first point of the period
+  get normalizedEvolution(): { month: string; pct: number }[] {
     const data = this.filteredEvolution;
+    if (!data.length) return [];
+    const base = data[0].value || 1;
+    return data.map((d: any) => ({
+      month: d.month,
+      pct: base > 0 ? ((d.value - base) / base) * 100 : 0
+    }));
+  }
+
+  // Final % for the selected period (shown in header badge)
+  get periodPerformancePct(): number {
+    const norm = this.normalizedEvolution;
+    return norm.length ? norm.at(-1)!.pct : 0;
+  }
+
+  get isPeriodPositive(): boolean {
+    return this.periodPerformancePct >= 0;
+  }
+
+  private normMinMax(): { min: number; max: number } {
+    const vals = this.normalizedEvolution.map(d => d.pct);
+    if (!vals.length) return { min: -1, max: 1 };
+    const rawMin = Math.min(...vals, 0);
+    const rawMax = Math.max(...vals, 0);
+    const pad = (rawMax - rawMin) * 0.25 || 0.5;
+    return { min: rawMin - pad, max: rawMax + pad };
+  }
+
+  private normPtY(pct: number, H: number, min: number, max: number): number {
+    const range = max - min || 1;
+    return H - ((pct - min) / range) * (H - 12) - 6;
+  }
+
+  perfPortfolioPath(W = 548, H = 130): string {
+    const data = this.normalizedEvolution;
     if (data.length < 2) return '';
-    const { min, max } = this.perfMinMax(data, this.benchmarkPoints);
-    return data.map((_, i) => {
-      const p = this.perfPt(data, i, W, H, min, max);
-      return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    const { min, max } = this.normMinMax();
+    return data.map((d, i) => {
+      const x = (i / Math.max(data.length - 1, 1)) * W;
+      const y = this.normPtY(d.pct, H, min, max);
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
     }).join(' ');
   }
 
-  perfPortfolioAreaPath(W = 560, H = 130): string {
-    const data = this.filteredEvolution;
+  perfPortfolioAreaPath(W = 548, H = 130): string {
+    const data = this.normalizedEvolution;
     if (data.length < 2) return '';
-    const { min, max } = this.perfMinMax(data, this.benchmarkPoints);
-    const pts = data.map((_, i) => this.perfPt(data, i, W, H, min, max));
+    const { min, max } = this.normMinMax();
+    const zeroY = Math.min(this.normPtY(0, H, min, max), H);
+    const pts = data.map((d, i) => ({
+      x: (i / Math.max(data.length - 1, 1)) * W,
+      y: this.normPtY(d.pct, H, min, max)
+    }));
     const last = pts[pts.length - 1];
     const first = pts[0];
-    return `M ${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')} L ${last.x.toFixed(1)} ${H} L ${first.x.toFixed(1)} ${H} Z`;
+    return `M ${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ')} L ${last.x.toFixed(1)} ${zeroY.toFixed(1)} L ${first.x.toFixed(1)} ${zeroY.toFixed(1)} Z`;
   }
 
-  perfBenchmarkPath(W = 560, H = 130): string {
-    const data = this.benchmarkPoints;
-    const evo  = this.filteredEvolution;
-    if (data.length < 2) return '';
-    const { min, max } = this.perfMinMax(evo, data);
-    return data.map((_, i) => {
-      const p = this.perfPt(data, i, W, H, min, max);
-      return `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
-    }).join(' ');
+  // Y coordinate of the 0% reference line
+  get perfZeroLineY(): number {
+    const { min, max } = this.normMinMax();
+    return Math.min(this.normPtY(0, 130, min, max), 130);
   }
 
   get perfXLabels(): { x: number; label: string }[] {
-    const data = this.filteredEvolution;
+    const data = this.normalizedEvolution;
     if (!data.length) return [];
-    const W = 560;
+    const W = 548;
     const step = data.length > 6 ? Math.ceil(data.length / 6) : 1;
     return data
       .map((d, i) => ({ d, i }))
@@ -303,15 +303,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get perfYLabels(): { y: number; label: string }[] {
-    const data = this.filteredEvolution;
-    const bench = this.benchmarkPoints;
-    if (!data.length) return [];
+    const { min, max } = this.normMinMax();
+    if (!this.normalizedEvolution.length) return [];
     const H = 130;
-    const { min, max } = this.perfMinMax(data, bench);
     return [0, 0.25, 0.5, 0.75, 1].map(s => {
       const val = min + (max - min) * s;
       const y   = H - s * (H - 12) - 6;
-      return { y, label: val >= 1000 ? Math.round(val / 1000) + 'k' : Math.round(val).toString() };
+      const sign = val > 0 ? '+' : '';
+      return { y, label: `${sign}${val.toFixed(1)}%` };
     });
   }
 

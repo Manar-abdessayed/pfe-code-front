@@ -45,6 +45,7 @@ export class AssistantComponent implements OnInit, OnDestroy, AfterViewChecked {
     dashboard:  '/dashboard',
     ia:         '/assistant',
     portfolio:  '/portfolio',
+    reco:       '/assistant',
     profil:     '/profile',
     settings:   '/settings',
   };

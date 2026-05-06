@@ -41,9 +41,11 @@ export class SettingsComponent implements OnInit {
 
   private readonly navRoutes: Record<string, string> = {
     dashboard: '/dashboard',
+    ia:        '/assistant',
     portfolio: '/portfolio',
-    profil: '/profile',
-    settings: '/settings',
+    reco:      '/assistant',
+    profil:    '/profile',
+    settings:  '/settings',
   };
 
   constructor(

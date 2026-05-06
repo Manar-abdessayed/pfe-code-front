@@ -40,7 +40,7 @@
         </svg>
         <span *ngIf="!sidebarCollapsed">Validation</span>
       </a>
-      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
+      <a class="nav-item" [class.active]="activeNav==='config'" (click)="navigateTo('config')" style="cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
@@ -48,6 +48,16 @@
         <span *ngIf="!sidebarCollapsed">Configuration</span>
       </a>
     </nav>
+
+    <div class="sidebar-bottom">
+      <button class="switch-mode-btn" (click)="switchToUserMode()" [title]="sidebarCollapsed ? 'Mode utilisateur' : ''">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Mode utilisateur</span>
+      </button>
+    </div>
 
     <button class="sidebar-toggle" (click)="toggleSidebar()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -199,37 +209,46 @@
         <div class="chart-card">
           <div class="chart-header">
             <span class="chart-title">Utilisateurs actifs (24h)</span>
-            <span class="chart-badge chart-badge-teal">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              Temps réel
-            </span>
+            <div class="chart-header-right">
+              <span class="chart-peak" *ngIf="!chartLoading && userActivityData.length">
+                Pic : {{ peakUsers }} utilisateurs
+              </span>
+              <span class="chart-badge chart-badge-teal">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Temps réel
+              </span>
+            </div>
           </div>
-          <svg [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
+          <!-- Chart loading skeleton -->
+          <div class="chart-skeleton" *ngIf="chartLoading">
+            <div class="skeleton-bar"></div>
+          </div>
+          <svg *ngIf="!chartLoading && userActivityData.length"
+               [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
             <defs>
               <linearGradient id="areaGrad1" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#0f1629" stop-opacity="0.15"/>
                 <stop offset="100%" stop-color="#0f1629" stop-opacity="0.01"/>
               </linearGradient>
             </defs>
-            <!-- Y grid lines -->
             <line *ngFor="let y of yLabels(userActivityData)"
               [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
               stroke="#f0f0f0" stroke-width="1"/>
-            <!-- Y labels -->
             <text *ngFor="let y of yLabels(userActivityData)"
               [attr.x]="PL-6" [attr.y]="y.y+4" text-anchor="end"
               font-size="10" fill="#94a3b8">{{ y.label }}</text>
-            <!-- X labels -->
             <text *ngFor="let x of xLabels(userActivityData)"
               [attr.x]="x.x" [attr.y]="H-8" text-anchor="middle"
               font-size="10" fill="#94a3b8">{{ x.label }}</text>
-            <!-- Area fill -->
             <path [attr.d]="areaPath(userActivityData)" fill="url(#areaGrad1)"/>
-            <!-- Line -->
             <path [attr.d]="linePath(userActivityData)"
               fill="none" stroke="#0f1629" stroke-width="2" stroke-linejoin="round"/>
+            <!-- Current hour indicator dot -->
+            <circle *ngIf="currentHourPoint"
+              [attr.cx]="currentHourPoint.x" [attr.cy]="currentHourPoint.y"
+              r="4" fill="#0f1629" stroke="white" stroke-width="2"/>
           </svg>
         </div>
 

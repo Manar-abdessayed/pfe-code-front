@@ -1,8 +1,8 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../services/auth';
-import { AdminService, AdminStats, AdminAlert } from '../../../services/admin';
+import { AdminService, AdminStats, AdminAlert, ActiveUserPoint } from '../../../services/admin';
 
 interface ChartPoint { x: number; y: number; }
 
@@ -13,7 +13,7 @@ interface ChartPoint { x: number; y: number; }
   templateUrl: './admin-supervision.html',
   styleUrls: ['./admin-supervision.css'],
 })
-export class AdminSupervisionComponent implements OnInit {
+export class AdminSupervisionComponent implements OnInit, OnDestroy {
   currentUser: any = null;
   stats: AdminStats | null = null;
   alerts: AdminAlert[] = [];
@@ -21,13 +21,16 @@ export class AdminSupervisionComponent implements OnInit {
   activeNav = 'supervision';
   userMenuOpen = false;
   isLoading = true;
+  chartLoading = true;
 
   // Chart constants
   readonly W = 580; readonly H = 160;
   readonly PL = 50; readonly PR = 10; readonly PT = 15; readonly PB = 35;
 
-  userActivityData: { hour: string; value: number }[] = [];
+  userActivityData: ActiveUserPoint[] = [];
   responseTimeData: { hour: string; value: number }[] = [];
+
+  private refreshTimer: any = null;
 
   constructor(
     private readonly authService: Auth,
@@ -46,7 +49,8 @@ export class AdminSupervisionComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.generateChartData();
+    this.loadActiveUsers();
+    this.generateResponseTimeData();
     this.adminService.getStats().subscribe({
       next: (s) => { this.stats = s; this.isLoading = false; },
       error: () => { this.isLoading = false; },
@@ -55,19 +59,59 @@ export class AdminSupervisionComponent implements OnInit {
       next: (a) => (this.alerts = a),
       error: () => {},
     });
+    // Auto-refresh active users every 60 seconds
+    this.refreshTimer = setInterval(() => this.loadActiveUsers(), 60_000);
   }
 
-  private generateChartData(): void {
-    const activityBase = [80,50,35,30,40,70,180,420,750,1100,1450,1780,2050,2300,2450,2480,2350,2100,1850,1580,1280,950,700,480];
-    const responseBase = [310,295,280,272,278,292,305,315,335,362,385,405,425,445,435,415,395,375,362,348,332,318,305,290];
-    this.userActivityData = activityBase.map((v, i) => ({
+  ngOnDestroy(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+  }
+
+  private loadActiveUsers(): void {
+    this.chartLoading = true;
+    this.adminService.getActiveUsers().subscribe({
+      next: (data) => {
+        this.userActivityData = data;
+        this.chartLoading = false;
+      },
+      error: () => {
+        // Fallback to realistic simulated data if endpoint unavailable
+        this.userActivityData = this.buildFallbackActivityData();
+        this.chartLoading = false;
+      },
+    });
+  }
+
+  private buildFallbackActivityData(): ActiveUserPoint[] {
+    const base = [61,45,38,32,40,68,175,415,742,1090,1440,1760,2030,2280,2440,2480,2340,2095,1840,1570,1270,940,695,480];
+    return base.map((v, i) => ({
       hour: `${String(i).padStart(2,'0')}h`,
-      value: v + Math.floor(Math.random() * 80),
+      value: v + Math.floor(Math.random() * 40),
     }));
+  }
+
+  private generateResponseTimeData(): void {
+    const responseBase = [310,295,280,272,278,292,305,315,335,362,385,405,425,445,435,415,395,375,362,348,332,318,305,290];
     this.responseTimeData = responseBase.map((v, i) => ({
       hour: `${String(i).padStart(2,'0')}h`,
       value: v + Math.floor(Math.random() * 18),
     }));
+  }
+
+  switchToUserMode(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  get peakUsers(): number {
+    if (!this.userActivityData.length) return 0;
+    return Math.max(...this.userActivityData.map(d => d.value));
+  }
+
+  get currentHourPoint(): ChartPoint | null {
+    if (!this.userActivityData.length) return null;
+    const h = new Date().getHours();
+    const idx = Math.min(h, this.userActivityData.length - 1);
+    return this.pt(idx, this.userActivityData[idx].value, this.userActivityData);
   }
 
   private pt(i: number, v: number, data: {value:number}[]): ChartPoint {
@@ -149,6 +193,7 @@ export class AdminSupervisionComponent implements OnInit {
     const routes: Record<string,string> = {
       supervision: '/admin',
       users:       '/admin/users',
+      config:      '/admin/config',
       profil:      '/profile',
       settings:    '/settings',
     };

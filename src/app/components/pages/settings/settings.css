@@ -2,14 +2,16 @@
 .app-layout {
   display: flex;
   height: 100vh;
-  background: #f5f6fa;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f7fb 60%, #fff9f0 100%);
   font-family: 'Inter', -apple-system, sans-serif;
 }
 
 /* ======================== SIDEBAR ======================== */
 .sidebar {
   width: 220px;
-  background: #0f1629;
+  background: linear-gradient(180deg, #0e1d38 0%, #0f1629 100%);
+  border-top: 3px solid #f59e0b;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.18);
   display: flex;
   flex-direction: column;
   padding: 20px 0;
@@ -29,8 +31,9 @@
 }
 .logo-icon {
   width: 32px; height: 32px;
-  background: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.4);
   display: flex; align-items: center; justify-content: center;
   color: white; flex-shrink: 0;
 }
@@ -48,7 +51,18 @@
   text-decoration: none; white-space: nowrap; overflow: hidden;
 }
 .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
-.nav-item.active { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(245,158,11,0.22) 0%, rgba(245,158,11,0.04) 100%);
+  color: #f59e0b;
+  border-left: 3px solid #f59e0b;
+  padding-left: 9px;
+}
+
+.sidebar-bottom {
+  padding: 8px 10px 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 4px;
+}
 
 .sidebar-toggle {
   margin: 0 10px; padding: 8px;
@@ -65,7 +79,8 @@
 .topbar {
   height: 60px;
   background: white;
-  border-bottom: 1px solid #e8eaf0;
+  border-bottom: 1px solid rgba(245,158,11,0.18);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   display: flex; align-items: center;
   justify-content: space-between;
   padding: 0 24px; flex-shrink: 0;
@@ -89,8 +104,10 @@
 
 .user-dropdown {
   position: absolute; top: calc(100% + 10px); right: 0;
-  width: 220px; background: white; border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  width: 220px; background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
   border: 1px solid #eef0f4; z-index: 100; overflow: hidden;
 }
 .user-dropdown-header { padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
@@ -109,10 +126,19 @@
 .user-dropdown-logout:hover { background: #fff5f5; }
 
 /* ======================== PAGE CONTENT ======================== */
-.page-content { flex: 1; overflow-y: auto; padding: 28px 28px 40px; }
+.page-content {
+  flex: 1; overflow-y: auto; padding: 28px 28px 40px;
+  scrollbar-width: thin; scrollbar-color: #dde1e9 transparent;
+}
 
 .page-header { margin-bottom: 24px; }
-.page-header h1 { font-size: 22px; font-weight: 700; color: #0f1629; margin: 0 0 4px; }
+.page-header h1 {
+  font-size: 22px; font-weight: 700; margin: 0 0 4px;
+  background: linear-gradient(135deg, #0f1629 0%, #1e3a6e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .page-subtitle { font-size: 13.5px; color: #6b7280; margin: 0; }
 
 /* ======================== SETTINGS GRID ======================== */
@@ -128,6 +154,11 @@
   border: 1px solid #e8eaf0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.settings-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
 }
 
 .card-header {
@@ -239,15 +270,26 @@
   padding: 10px 20px; border-radius: 9px; border: none;
   background: #0f1629; color: white;
   font-size: 13.5px; font-weight: 600;
-  cursor: pointer; transition: opacity 0.15s;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(15,22,41,0.20);
 }
-.btn-save:hover:not(:disabled) { opacity: 0.85; }
-.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-save:hover:not(:disabled) {
+  background: #1e2d4a;
+  box-shadow: 0 4px 18px rgba(15,22,41,0.30);
+  transform: translateY(-1px);
+}
+.btn-save:active:not(:disabled) { transform: translateY(0); }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
-/* Purple and amber variants stay visually distinct but within the brand */
 .btn-save.btn-purple { background: #1e3a5f; }
-.btn-save.btn-amber  { background: #f59e0b; }
-.btn-save.btn-amber:hover:not(:disabled) { background: #d97706; opacity: 1; }
+.btn-save.btn-purple:hover:not(:disabled) { background: #162d4a; }
+.btn-save.btn-amber  { background: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.28); }
+.btn-save.btn-amber:hover:not(:disabled) {
+  background: #d97706;
+  box-shadow: 0 4px 16px rgba(245,158,11,0.40);
+  transform: translateY(-1px);
+}
 
 /* Spinner */
 .spinner-sm {

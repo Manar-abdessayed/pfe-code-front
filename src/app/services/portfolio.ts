@@ -30,7 +30,8 @@ export interface AssetClassBreakdown {
 }
 
 export interface EvolutionPoint {
-  month: string;
+  month: string;     // "dd/MM" — display label on X-axis
+  monthKey?: string; // "yyyy-MM" — used for benchmark lookup
   value: number;
 }
 
