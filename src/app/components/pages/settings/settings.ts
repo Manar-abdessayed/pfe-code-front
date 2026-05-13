@@ -43,7 +43,7 @@ export class SettingsComponent implements OnInit {
     dashboard: '/dashboard',
     ia:        '/assistant',
     portfolio: '/portfolio',
-    reco:      '/assistant',
+    reco:      '/recommendations',
     profil:    '/profile',
     settings:  '/settings',
   };

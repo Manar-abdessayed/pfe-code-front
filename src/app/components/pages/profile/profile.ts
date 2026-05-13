@@ -198,7 +198,7 @@ export class ProfileComponent implements OnInit {
     if (nav === 'dashboard') this.router.navigate(['/dashboard']);
     if (nav === 'ia')        this.router.navigate(['/assistant']);
     if (nav === 'portfolio') this.router.navigate(['/portfolio']);
-    if (nav === 'reco')      this.router.navigate(['/assistant']);
+    if (nav === 'reco')      this.router.navigate(['/recommendations']);
     if (nav === 'profil')    this.router.navigate(['/profile']);
     if (nav === 'settings')  this.router.navigate(['/settings']);
   }

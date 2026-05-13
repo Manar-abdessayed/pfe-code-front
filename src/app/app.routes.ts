@@ -11,6 +11,7 @@ import { AssistantComponent } from './components/pages/assistant/assistant';
 import { AdminSupervisionComponent } from './components/admin/supervision/admin-supervision';
 import { AdminUsersComponent } from './components/admin/users/admin-users';
 import { AdminConfigComponent } from './components/admin/config/admin-config';
+import { RecommendationsComponent } from './components/pages/recommendations/recommendations';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'assistant', component: AssistantComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'portfolio', component: PortfolioComponent },
+  { path: 'recommendations', component: RecommendationsComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'admin', component: AdminSupervisionComponent },
   { path: 'admin/users', component: AdminUsersComponent },

@@ -98,7 +98,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     dashboard: '/dashboard',
     ia:        '/assistant',
     portfolio: '/portfolio',
-    reco:      '/assistant',
+    reco:      '/recommendations',
     profil:    '/profile',
     settings:  '/settings',
   };

@@ -432,6 +432,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.activeNav = nav;
     if (nav === 'portfolio') this.router.navigate(['/portfolio']);
     if (nav === 'ia')        this.router.navigate(['/assistant']);
+    if (nav === 'reco')      this.router.navigate(['/recommendations']);
     if (nav === 'profil')    this.router.navigate(['/profile']);
     if (nav === 'settings')  this.router.navigate(['/settings']);
   }

@@ -1,0 +1,394 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.8"/>
+        </svg>
+      </div>
+      <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="activeNav === 'dashboard'" (click)="navigateTo('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'ia'" (click)="navigateTo('ia')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Assistant IA</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'portfolio'" (click)="navigateTo('portfolio')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Portefeuille</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'reco'" (click)="navigateTo('reco')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Recommandations</span>
+      </a>
+      <a class="nav-item" [class.active]="activeNav === 'profil'" (click)="navigateTo('profil')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Profil</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a class="nav-item" [class.active]="activeNav === 'settings'" (click)="navigateTo('settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Paramètres</span>
+      </a>
+
+      <button *ngIf="currentUser?.role === 'ADMIN'" class="switch-mode-btn" (click)="switchToAdminMode()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Mode administrateur</span>
+      </button>
+    </div>
+
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="page-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            <polyline points="16 7 22 7 22 13"/>
+          </svg>
+          <span>Recommandations IA</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="ia-status">
+          <span class="status-dot"></span>
+          <span>IA en ligne</span>
+        </div>
+        <div class="user-menu-wrap">
+          <button class="user-btn" (click)="toggleUserMenu()">
+            <div class="user-avatar">
+              {{ currentUser?.firstName?.charAt(0) }}{{ currentUser?.lastName?.charAt(0) }}
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="user-dropdown" *ngIf="userMenuOpen">
+            <div class="dropdown-header">
+              <strong>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</strong>
+              <span>{{ currentUser?.email }}</span>
+            </div>
+            <a class="dropdown-item" (click)="navigateTo('profil'); userMenuOpen=false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Mon profil
+            </a>
+            <a class="dropdown-item" (click)="navigateTo('settings'); userMenuOpen=false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              Paramètres
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item text-red" (click)="logout()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Déconnexion
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div class="header-left">
+          <h1 class="page-h1">Recommandations</h1>
+          <p class="page-sub">Conseils d'investissement générés par notre IA</p>
+          <div class="last-updated" *ngIf="lastUpdated">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Mis à jour le {{ formatDate(lastUpdated) }}
+          </div>
+        </div>
+        <div class="header-right">
+          <button class="btn-generate" (click)="generate()" [disabled]="isRefreshing">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [class.spin]="isRefreshing">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+            </svg>
+            {{ isRefreshing ? 'Génération...' : 'Actualiser les recommandations' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- SUMMARY CARDS -->
+      <div class="summary-row" *ngIf="!isLoading && recommendations.length > 0">
+        <div class="summary-card">
+          <div class="summary-icon icon-all">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="summary-info">
+            <div class="summary-val">{{ recommendations.length }}</div>
+            <div class="summary-lbl">Total</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon icon-achat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+              <polyline points="17 6 23 6 23 12"/>
+            </svg>
+          </div>
+          <div class="summary-info">
+            <div class="summary-val text-green">{{ countByAction('ACHAT') }}</div>
+            <div class="summary-lbl">Achat</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon icon-vente">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+              <polyline points="17 18 23 18 23 12"/>
+            </svg>
+          </div>
+          <div class="summary-info">
+            <div class="summary-val text-red">{{ countByAction('VENTE') }}</div>
+            <div class="summary-lbl">Vente</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon icon-conserver">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <div class="summary-info">
+            <div class="summary-val text-amber">{{ countByAction('CONSERVER') }}</div>
+            <div class="summary-lbl">Conserver</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filter-bar" *ngIf="!isLoading">
+        <button class="filter-btn" [class.active]="activeFilter === 'all'"
+                (click)="setFilter('all')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          Toutes
+        </button>
+        <button class="filter-btn filter-achat" [class.active]="activeFilter === 'ACHAT'"
+                (click)="setFilter('ACHAT')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+          Achat
+        </button>
+        <button class="filter-btn filter-vente" [class.active]="activeFilter === 'VENTE'"
+                (click)="setFilter('VENTE')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+            <polyline points="17 18 23 18 23 12"/>
+          </svg>
+          Vente
+        </button>
+        <button class="filter-btn filter-conserver" [class.active]="activeFilter === 'CONSERVER'"
+                (click)="setFilter('CONSERVER')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Conserver
+        </button>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des recommandations...</p>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div class="error-state" *ngIf="!isLoading && errorMsg">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p>{{ errorMsg }}</p>
+        <button class="btn-retry" (click)="loadRecommendations()">Réessayer</button>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div class="empty-state" *ngIf="!isLoading && !errorMsg && !hasRecs">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
+        <h3>Aucune recommandation</h3>
+        <p *ngIf="activeFilter === 'all'">Cliquez sur "Actualiser" pour générer des recommandations depuis les données de marché.</p>
+        <p *ngIf="activeFilter !== 'all'">Aucune recommandation de type "{{ activeFilter }}" disponible.</p>
+        <button class="btn-generate" (click)="generate()" *ngIf="activeFilter === 'all'">
+          Générer maintenant
+        </button>
+      </div>
+
+      <!-- CARDS GRID -->
+      <div class="cards-grid" *ngIf="!isLoading && !errorMsg && hasRecs">
+        <div class="reco-card" *ngFor="let rec of filtered">
+
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="card-avatar">{{ getInitials(rec.companyName || rec.symbol) }}</div>
+            <div class="card-title-block">
+              <div class="card-symbol">{{ rec.symbol }}</div>
+              <div class="card-company">{{ rec.companyName }}</div>
+            </div>
+            <div class="card-badges">
+              <span class="action-badge" [ngClass]="getActionClass(rec.action)">
+                <span class="badge-icon">{{ getActionIcon(rec.action) }}</span>
+                {{ getActionLabel(rec.action) }}
+              </span>
+              <span class="type-badge">{{ rec.analysisType }}</span>
+            </div>
+          </div>
+
+          <!-- Price Row -->
+          <div class="price-row">
+            <div class="price-block">
+              <div class="price-label">Prix actuel</div>
+              <div class="price-val">${{ rec.currentPrice | number:'1.2-2' }}</div>
+            </div>
+            <div class="price-arrow" [class.arrow-up]="rec.targetPrice > rec.currentPrice"
+                 [class.arrow-down]="rec.targetPrice < rec.currentPrice">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline [attr.points]="rec.targetPrice >= rec.currentPrice ? '12 5 19 12 12 19' : '12 19 19 12 12 5'"/>
+              </svg>
+            </div>
+            <div class="price-block">
+              <div class="price-label">Prix cible</div>
+              <div class="price-val" [class.text-green]="rec.targetPrice > rec.currentPrice"
+                   [class.text-red]="rec.targetPrice < rec.currentPrice">
+                ${{ rec.targetPrice | number:'1.2-2' }}
+              </div>
+            </div>
+            <div class="price-change" [class.positive]="getPriceChange(rec) > 0"
+                 [class.negative]="getPriceChange(rec) < 0">
+              {{ getPriceChange(rec) > 0 ? '+' : '' }}{{ getPriceChange(rec) | number:'1.1-1' }}%
+            </div>
+          </div>
+
+          <!-- Indicators Row -->
+          <div class="indicators-row">
+            <div class="indicator">
+              <span class="ind-label">RSI</span>
+              <span class="ind-val" [class.ind-oversold]="rec.rsi < 30"
+                    [class.ind-overbought]="rec.rsi > 70">
+                {{ rec.rsi | number:'1.1-1' }}
+              </span>
+            </div>
+            <div class="indicator">
+              <span class="ind-label">MACD</span>
+              <span class="ind-val" [class.text-green]="rec.macd > 0" [class.text-red]="rec.macd < 0">
+                {{ rec.macd | number:'1.2-4' }}
+              </span>
+            </div>
+            <div class="indicator">
+              <span class="ind-label">Risque</span>
+              <span class="ind-val risk-chip" [ngClass]="getRiskClass(rec.riskLevel)">
+                {{ rec.riskLevel }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Confidence Bar -->
+          <div class="confidence-section">
+            <div class="confidence-header">
+              <span class="conf-label">Confiance IA</span>
+              <span class="conf-val" [style.color]="getConfidenceColor(rec.confidence)">
+                {{ rec.confidence | number:'1.0-0' }}%
+              </span>
+            </div>
+            <div class="confidence-track">
+              <div class="confidence-fill"
+                   [style.width.%]="getConfidenceBar(rec.confidence)"
+                   [style.background]="getConfidenceColor(rec.confidence)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Rationale -->
+          <div class="rationale" *ngIf="rec.rationale">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ rec.rationale }}
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <div class="signal-dots">
+              <span class="sig-dot" [class.sig-active]="rec.signalRsi === 'Buy'" title="RSI">RSI</span>
+              <span class="sig-dot" [class.sig-active]="rec.signalMacd === 'Buy'" title="MACD">MACD</span>
+              <span class="sig-dot" [class.sig-active]="rec.signalBb === 'Buy'" title="BB">BB</span>
+            </div>
+            <div class="card-date">{{ formatDate(rec.createdAt) }}</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- AI BADGE -->
+      <div class="ai-badge-footer" *ngIf="!isLoading && hasRecs">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        Powered by n8n · Analyse technique
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -25,8 +25,8 @@ export class AssistantService {
     return this.http.get<AssistantMessage[]>(`${this.api}/${userId}/history`);
   }
 
-  sendMessage(userId: string, message: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${this.api}/${userId}/chat`, { message });
+  sendMessage(userId: string, message: string, email: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.api}/${userId}/chat`, { message, email });
   }
 
   clearHistory(userId: string): Observable<void> {

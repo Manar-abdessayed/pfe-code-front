@@ -45,7 +45,7 @@ export class AssistantComponent implements OnInit, OnDestroy, AfterViewChecked {
     dashboard:  '/dashboard',
     ia:         '/assistant',
     portfolio:  '/portfolio',
-    reco:       '/assistant',
+    reco:       '/recommendations',
     profil:     '/profile',
     settings:   '/settings',
   };
@@ -124,7 +124,7 @@ export class AssistantComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isTyping = true;
     this.shouldScrollBottom = true;
 
-    this.assistantService.sendMessage(this.currentUser.id, text).subscribe({
+    this.assistantService.sendMessage(this.currentUser.id, text, this.currentUser.email).subscribe({
       next: (res) => {
         this.messages.push({
           role: 'bot',
