@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, of, Subscription, forkJoin } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Subject, of, Subscription, forkJoin, interval } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 import { DashboardService } from '../../../services/dashboard';
 import { PortfolioService } from '../../../services/portfolio';
 import { Auth } from '../../../services/auth';
+import { RecommendationsService, Recommendation } from '../../../services/recommendations';
 
 @Component({
   selector: 'app-dashboard',
@@ -35,10 +36,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Alerts
   alerts: any[] = [];
   unreadAlerts = 0;
+  notifOpen = false;
 
   searchQuery = '';
   searchResults: any[] = [];
   showSearchDropdown = false;
+
+  // Instrument detail modal (opened from search results)
+  showInstrumentModal = false;
+  instrumentModalResult: any = null;
+  instrumentOhlcv: any[] = [];
+  instrumentLoading = false;
+  instrBuyForm = { quantity: 1, price: 0, sector: 'Finance', assetClass: 'Actions' };
+  isBuying = false;
+  buyError = '';
 
   // Analytics
   signalDistribution: any = null;
@@ -48,14 +59,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   macdTrend: any[] = [];
   analyticsLoading = true;
 
+  // Recommendations
+  recentRecos: Recommendation[] = [];
+  allRecos: Recommendation[] = [];
+  recoLoading = true;
+  showRecoModal = false;
+  recoModalFilter: 'all' | 'ACHAT' | 'VENTE' | 'CONSERVER' = 'all';
+
   private readonly searchSubject = new Subject<string>();
   private searchSub!: Subscription;
+  private recoSub!: Subscription;
 
   constructor(
     private readonly dashboardService: DashboardService,
     private readonly portfolioService: PortfolioService,
     private readonly authService: Auth,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly recoService: RecommendationsService,
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -63,12 +83,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('.user-menu-wrapper')) this.userMenuOpen = false;
     if (!target.closest('.topbar-search')) this.showSearchDropdown = false;
+    if (!target.closest('.notif-wrapper')) this.notifOpen = false;
   }
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.loadDashboardData();
     this.loadPortfolioData();
+    this.startRecoPolling();
 
     this.searchSub = this.searchSubject.pipe(
       debounceTime(300),
@@ -80,7 +102,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { this.searchSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+    this.recoSub?.unsubscribe();
+  }
 
   onSearchInput(q: string): void {
     this.searchQuery = q;
@@ -139,6 +164,88 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.dashboardService.getMarketVolatility().subscribe({ next: d => { this.marketVolatility = d; done(); }, error: () => done() });
     this.dashboardService.getMacdTrend().subscribe({ next: d => { this.macdTrend = d; done(); }, error: () => done() });
   }
+
+  // ── Recommendations ─────────────────────────────────────────────────────────
+
+  startRecoPolling(): void {
+    this.recoLoading = true;
+    this.recoSub = interval(30_000).pipe(startWith(0)).subscribe(() => {
+      this.recoService.getRecommendations('all').subscribe({
+        next: (data) => {
+          this.allRecos = data;
+          this.recentRecos = data.slice(0, 5);
+          this.recoLoading = false;
+        },
+        error: () => { this.recoLoading = false; }
+      });
+    });
+  }
+
+  openRecoModal(): void {
+    this.showRecoModal = true;
+    this.recoModalFilter = 'all';
+  }
+
+  closeRecoModal(): void {
+    this.showRecoModal = false;
+  }
+
+  setRecoModalFilter(f: 'all' | 'ACHAT' | 'VENTE' | 'CONSERVER'): void {
+    this.recoModalFilter = f;
+  }
+
+  get modalRecos(): Recommendation[] {
+    if (this.recoModalFilter === 'all') return this.allRecos;
+    return this.allRecos.filter(r => r.action === this.recoModalFilter);
+  }
+
+  countRecoByAction(action: string): number {
+    return this.allRecos.filter(r => r.action === action).length;
+  }
+
+  getRecoActionClass(action: string): string {
+    if (action === 'ACHAT') return 'reco-badge-achat';
+    if (action === 'VENTE') return 'reco-badge-vente';
+    return 'reco-badge-conserver';
+  }
+
+  getRecoActionLabel(action: string): string {
+    if (action === 'ACHAT') return 'Achat';
+    if (action === 'VENTE') return 'Vente';
+    return 'Conserver';
+  }
+
+  getRecoAccentColor(action: string): string {
+    if (action === 'ACHAT') return '#22c55e';
+    if (action === 'VENTE') return '#ef4444';
+    return '#f59e0b';
+  }
+
+  getRecoConfidenceColor(c: number): string {
+    if (c >= 85) return '#16a34a';
+    if (c >= 70) return '#f59e0b';
+    return '#dc2626';
+  }
+
+  getRecoPriceChange(rec: Recommendation): number {
+    if (!rec.currentPrice) return 0;
+    return ((rec.targetPrice - rec.currentPrice) / rec.currentPrice) * 100;
+  }
+
+  getRecoRiskClass(risk: string): string {
+    if (risk === 'Faible') return 'risk-low';
+    if (risk === 'Élevé') return 'risk-high';
+    return 'risk-med';
+  }
+
+  formatRecoDate(iso: string | null): string {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch { return '—'; }
+  }
+
+  // ── Alerts ───────────────────────────────────────────────────────────────────
 
   buildAlerts(): void {
     if (!this.topMovers?.gainers || !this.topMovers?.losers) return;
@@ -426,6 +533,106 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return (Number(v['avgVolatility']) / this.maxVolatility()) * 100;
   }
 
+  // ── Sentiment Gauge ─────────────────────────────────────────────────────────
+
+  get sentimentScore(): number {
+    if (!this.marketSummary?.totalInstruments) return 50;
+    return Math.round((Number(this.marketSummary.hausse) / Number(this.marketSummary.totalInstruments)) * 100);
+  }
+
+  get sentimentLabel(): string {
+    const s = this.sentimentScore;
+    if (s >= 70) return 'Optimiste';
+    if (s >= 55) return 'Positif';
+    if (s >= 45) return 'Neutre';
+    if (s >= 30) return 'Négatif';
+    return 'Pessimiste';
+  }
+
+  get sentimentColor(): string {
+    const s = this.sentimentScore;
+    if (s >= 70) return '#16a34a';
+    if (s >= 55) return '#22c55e';
+    if (s >= 45) return '#f59e0b';
+    if (s >= 30) return '#f97316';
+    return '#ef4444';
+  }
+
+  sentimentNeedle(): { x: number; y: number } {
+    const angle = Math.PI * (1 - this.sentimentScore / 100);
+    return {
+      x: +(110 + 72 * Math.cos(angle)).toFixed(1),
+      y: +(120 - 72 * Math.sin(angle)).toFixed(1)
+    };
+  }
+
+  // ── Movers chart ─────────────────────────────────────────────────────────────
+
+  get topGainers(): any[] { return (this.topMovers.gainers || []).slice(0, 5); }
+  get topLosers():  any[] { return (this.topMovers.losers  || []).slice(0, 5); }
+
+  get maxMoverPct(): number {
+    const all = [
+      ...(this.topMovers.gainers || []).map((g: any) => Math.abs(Number(g.price_variation_pct))),
+      ...(this.topMovers.losers  || []).map((l: any) => Math.abs(Number(l.price_variation_pct)))
+    ];
+    return Math.max(...all, 0.01);
+  }
+
+  getMoverBarW(pct: number): number {
+    return Math.round(Math.abs(Number(pct)) / this.maxMoverPct * 100);
+  }
+
+  // ── Reco profile ─────────────────────────────────────────────────────────────
+
+  get recoProfile(): { achat: number; vente: number; conserver: number; total: number; avgConf: number; lastDate: string } {
+    const achat     = this.allRecos.filter(r => r.action === 'ACHAT').length;
+    const vente     = this.allRecos.filter(r => r.action === 'VENTE').length;
+    const conserver = this.allRecos.filter(r => r.action === 'CONSERVER').length;
+    const total     = this.allRecos.length;
+    const avgConf   = total ? Math.round(this.allRecos.reduce((s, r) => s + r.confidence, 0) / total) : 0;
+    const lastDate  = total ? this.formatRecoDate(this.allRecos[0].createdAt) : '—';
+    return { achat, vente, conserver, total, avgConf, lastDate };
+  }
+
+  // ── RSI histogram ─────────────────────────────────────────────────────────────
+
+  get rsiHistogram(): { label: string; count: number; color: string }[] {
+    const b = [
+      { label: '< 30',  color: '#22c55e', count: 0 },
+      { label: '30–50', color: '#86efac', count: 0 },
+      { label: '50–70', color: '#fca5a5', count: 0 },
+      { label: '> 70',  color: '#ef4444', count: 0 },
+    ];
+    for (const sig of this.signals) {
+      const rsi = Number(sig.rsi_14);
+      if (isNaN(rsi)) continue;
+      if (rsi < 30)      b[0].count++;
+      else if (rsi < 50) b[1].count++;
+      else if (rsi < 70) b[2].count++;
+      else               b[3].count++;
+    }
+    return b;
+  }
+
+  get maxRsiCount(): number {
+    return Math.max(...this.rsiHistogram.map(b => b.count), 1);
+  }
+
+  // ── Volume helpers ────────────────────────────────────────────────────────────
+
+  get maxVolume(): number {
+    if (!this.volumeTrend.length) return 1;
+    return Math.max(...this.volumeTrend.map(d => Number(d['totalVolume'])), 1);
+  }
+
+  formatVolume(v: number): string {
+    const n = Number(v);
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return (n / 1_000).toFixed(0) + 'K';
+    return n.toFixed(0);
+  }
+
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   navigateTo(nav: string): void {
@@ -443,6 +650,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
 
+  toggleNotifPanel(event: MouseEvent): void {
+    event.stopPropagation();
+    this.notifOpen = !this.notifOpen;
+    if (this.notifOpen) this.unreadAlerts = 0;
+  }
+
   toggleUserMenu(event: MouseEvent): void {
     event.stopPropagation();
     this.userMenuOpen = !this.userMenuOpen;
@@ -451,5 +664,80 @@ export class DashboardComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  // ── Instrument detail modal ─────────────────────────────────────────────────
+
+  get existingPosition(): any {
+    if (!this.instrumentModalResult || !this.portfolioData?.positions) return null;
+    const sym = (this.instrumentModalResult.symbol || this.instrumentModalResult.short_name || '').toLowerCase();
+    return this.portfolioData.positions.find((p: any) =>
+      (p.symbol || '').toLowerCase() === sym
+    ) || null;
+  }
+
+  get instrBuyTotal(): number {
+    return this.instrBuyForm.quantity * this.instrBuyForm.price;
+  }
+
+  get instrBudgetExceeded(): boolean {
+    const capital = Number(this.portfolioData?.availableCapital) || 0;
+    return capital > 0 && this.instrBuyTotal > capital + 1e-9;
+  }
+
+  openInstrumentDetail(result: any): void {
+    this.instrumentModalResult = result;
+    this.showInstrumentModal = true;
+    this.showSearchDropdown = false;
+    this.searchQuery = '';
+    this.instrBuyForm = { quantity: 1, price: Number(result.close_price) || 0, sector: 'Finance', assetClass: 'Actions' };
+    this.buyError = '';
+    this.instrumentOhlcv = [];
+    if (result.isin) {
+      this.instrumentLoading = true;
+      this.dashboardService.getOhlcv(result.isin, 10).subscribe({
+        next: (data) => { this.instrumentOhlcv = data; this.instrumentLoading = false; },
+        error: () => { this.instrumentLoading = false; }
+      });
+    }
+  }
+
+  closeInstrumentModal(): void {
+    this.showInstrumentModal = false;
+    this.instrumentModalResult = null;
+    this.instrumentOhlcv = [];
+    this.isBuying = false;
+    this.buyError = '';
+  }
+
+  submitInstrumentBuy(): void {
+    if (!this.currentUser || !this.instrumentModalResult) return;
+    if (this.instrBuyForm.quantity <= 0) { this.buyError = 'La quantité doit être positive.'; return; }
+    if (this.instrBuyForm.price <= 0) { this.buyError = 'Le prix doit être positif.'; return; }
+    if (this.instrBudgetExceeded) {
+      const capital = Number(this.portfolioData?.availableCapital) || 0;
+      this.buyError = `Capital insuffisant. Disponible : ${this.formatCurrency(capital)} — Requis : ${this.formatCurrency(this.instrBuyTotal)}`;
+      return;
+    }
+    this.isBuying = true;
+    this.buyError = '';
+    this.portfolioService.buyStock(this.currentUser.id, {
+      symbol: this.instrumentModalResult.symbol || this.instrumentModalResult.short_name,
+      companyName: this.instrumentModalResult.full_name || this.instrumentModalResult.short_name,
+      quantity: this.instrBuyForm.quantity,
+      price: this.instrBuyForm.price,
+      sector: this.instrBuyForm.sector,
+      assetClass: this.instrBuyForm.assetClass,
+    }).subscribe({
+      next: (data) => {
+        this.portfolioData = data;
+        this.isBuying = false;
+        this.closeInstrumentModal();
+      },
+      error: (err) => {
+        this.buyError = err?.error?.message || "Erreur lors de l'achat.";
+        this.isBuying = false;
+      }
+    });
   }
 }

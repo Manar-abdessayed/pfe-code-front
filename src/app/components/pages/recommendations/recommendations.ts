@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 import { Auth } from '../../../services/auth';
 import { RecommendationsService, Recommendation } from '../../../services/recommendations';
 import { ProfileService, UserProfile } from '../../../services/profile';
+import { AssistantService } from '../../../services/assistant';
 
 @Component({
   selector: 'app-recommendations',
@@ -32,7 +34,8 @@ export class RecommendationsComponent implements OnInit {
     private router: Router,
     private auth: Auth,
     private recoService: RecommendationsService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private assistantService: AssistantService,
   ) {}
 
   ngOnInit(): void {
@@ -58,7 +61,8 @@ export class RecommendationsComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMsg = 'Impossible de charger les recommandations.';
+        this.recommendations = [];
+        this.applyFilter();
         this.isLoading = false;
       },
     });
@@ -69,26 +73,112 @@ export class RecommendationsComponent implements OnInit {
     this.isRefreshing = true;
     this.errorMsg = '';
 
-    const profile = this.userProfile;
-    const request = {
-      userId: this.currentUser.id,
-      riskTolerance: profile?.riskTolerance ?? this.currentUser.riskTolerance ?? 'MODERATE',
-      investmentGoal: profile?.investmentGoal ?? 'GROWTH',
-      investmentHorizon: profile?.investmentHorizon ?? 'MEDIUM_TERM',
-      availableCapital: profile?.availableCapital ?? 0,
-      sectors: profile?.sectors ?? [],
-    };
+    this.assistantService
+      .createConversation(this.currentUser.id, 'recommandations')
+      .pipe(
+        switchMap((conv: any) =>
+          this.assistantService.sendMessage(
+            this.currentUser.id,
+            conv.id,
+            'recommandations',
+            this.currentUser.email ?? '',
+          )
+        )
+      )
+      .subscribe({
+        next: (res: any) => {
+          const parsed = this.parseAssistantResponse(res.response ?? '');
+          if (parsed.length > 0) {
+            this.recommendations = parsed;
+            this.applyFilter();
+            this.lastUpdated = new Date().toISOString();
+            // Persist to DB so the dashboard can display them
+            this.recoService.saveBatch(parsed).subscribe();
+          } else {
+            this.errorMsg = "Impossible de lire les recommandations de l'assistant.";
+          }
+          this.isRefreshing = false;
+        },
+        error: () => {
+          this.errorMsg = 'Erreur lors de la génération des recommandations.';
+          this.isRefreshing = false;
+        },
+      });
+  }
 
-    this.recoService.generate(request).subscribe({
-      next: () => {
-        this.loadRecommendations();
-        this.isRefreshing = false;
-      },
-      error: () => {
-        this.errorMsg = "Erreur lors de la génération des recommandations.";
-        this.isRefreshing = false;
-      },
-    });
+  private parseAssistantResponse(text: string): Recommendation[] {
+    const results: Recommendation[] = [];
+    const blocks = text.split(/\n(?=\d+\.\s)/);
+
+    for (const block of blocks) {
+      const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) continue;
+
+      const headerMatch = lines[0].match(/\d+\.\s+\S+\s+(\S+)\s+[-—–]+\s+(.+)/);
+      if (!headerMatch) continue;
+
+      const symbol = headerMatch[1].trim();
+      const companyName = headerMatch[2].trim();
+
+      let action: 'ACHAT' | 'VENTE' | 'CONSERVER' = 'CONSERVER';
+      let currentPrice = 0;
+      let targetPrice = 0;
+      let confidence = 0;
+      let analysisType = '';
+      let rationale = '';
+      let riskLevel: 'Faible' | 'Moyen' | 'Élevé' = 'Moyen';
+
+      for (const line of lines.slice(1)) {
+        const actionMatch = line.match(/Action\s*:\s*(ACHAT|VENTE|CONSERVER)/);
+        if (actionMatch) {
+          action = actionMatch[1] as 'ACHAT' | 'VENTE' | 'CONSERVER';
+          const priceMatch = line.match(
+            /Prix actuel\s*:\s*([\d\s]+?)\s*FCFA\s*(?:→|->|>)\s*Objectif\s*:\s*([\d\s]+?)\s*FCFA/
+          );
+          if (priceMatch) {
+            currentPrice = parseInt(priceMatch[1].replace(/\s/g, ''), 10);
+            targetPrice  = parseInt(priceMatch[2].replace(/\s/g, ''), 10);
+          }
+        }
+
+        const confMatch = line.match(/Confiance\s*:\s*(\d+)%\s*\|\s*Type\s*:\s*(.+)/);
+        if (confMatch) {
+          confidence   = parseInt(confMatch[1], 10);
+          analysisType = confMatch[2].trim();
+        }
+
+        const riskMatch = line.match(/Risque\s*:\s*(Faible|Moyen|Élevé)/);
+        if (riskMatch) riskLevel = riskMatch[1] as 'Faible' | 'Moyen' | 'Élevé';
+
+        if (line.includes('📋')) rationale = line.replace('📋', '').trim();
+      }
+
+      if (!symbol) continue;
+
+      results.push({
+        id: `${symbol}_${Date.now()}_${results.length}`,
+        isin: '',
+        symbol,
+        companyName,
+        action,
+        analysisType,
+        currentPrice,
+        targetPrice,
+        confidence,
+        rationale,
+        riskLevel,
+        rsi: 50,
+        macd: 0,
+        volatility: 0,
+        signalRsi:  action === 'ACHAT' ? 'Buy' : 'Sell',
+        signalMacd: action === 'ACHAT' ? 'Buy' : 'Sell',
+        signalBb:   action === 'ACHAT' ? 'Buy' : 'Sell',
+        createdAt: new Date().toISOString(),
+        active: true,
+      });
+    }
+
+    return results;
   }
 
   setFilter(f: 'all' | 'ACHAT' | 'VENTE' | 'CONSERVER'): void {
@@ -137,20 +227,20 @@ export class RecommendationsComponent implements OnInit {
   // ── Display helpers ─────────────────────────────────────────────────────────
 
   getActionClass(action: string): string {
-    if (action === 'ACHAT')    return 'badge-achat';
-    if (action === 'VENTE')    return 'badge-vente';
+    if (action === 'ACHAT') return 'badge-achat';
+    if (action === 'VENTE') return 'badge-vente';
     return 'badge-conserver';
   }
 
   getActionLabel(action: string): string {
-    if (action === 'ACHAT')    return 'ACHAT';
-    if (action === 'VENTE')    return 'VENTE';
+    if (action === 'ACHAT') return 'ACHAT';
+    if (action === 'VENTE') return 'VENTE';
     return 'CONSERVER';
   }
 
   getActionIcon(action: string): string {
-    if (action === 'ACHAT')  return '↑';
-    if (action === 'VENTE')  return '↓';
+    if (action === 'ACHAT') return '↑';
+    if (action === 'VENTE') return '↓';
     return '→';
   }
 

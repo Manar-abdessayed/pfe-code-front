@@ -2,10 +2,19 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface Conversation {
+  id: string;
+  userId: string;
+  title: string;
+  createdAt?: string;
+  lastMessageAt?: string;
+}
+
 export interface AssistantMessage {
   id?: string;
   role: 'user' | 'bot';
   content: string;
+  conversationId?: string;
   createdAt?: string;
 }
 
@@ -21,15 +30,40 @@ export class AssistantService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getHistory(userId: string): Observable<AssistantMessage[]> {
-    return this.http.get<AssistantMessage[]>(`${this.api}/${userId}/history`);
+  // ── Conversations ──────────────────────────────────────────────────────────
+
+  getConversations(userId: string): Observable<Conversation[]> {
+    return this.http.get<Conversation[]>(`${this.api}/${userId}/conversations`);
   }
 
-  sendMessage(userId: string, message: string, email: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${this.api}/${userId}/chat`, { message, email });
+  createConversation(userId: string, title?: string): Observable<Conversation> {
+    return this.http.post<Conversation>(`${this.api}/${userId}/conversations`,
+      title ? { title } : {});
   }
 
-  clearHistory(userId: string): Observable<void> {
-    return this.http.delete<void>(`${this.api}/${userId}/history`);
+  renameConversation(userId: string, conversationId: string, title: string): Observable<Conversation> {
+    return this.http.put<Conversation>(
+      `${this.api}/${userId}/conversations/${conversationId}`, { title });
+  }
+
+  deleteConversation(userId: string, conversationId: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${userId}/conversations/${conversationId}`);
+  }
+
+  // ── Messages ───────────────────────────────────────────────────────────────
+
+  getConversationMessages(userId: string, conversationId: string): Observable<AssistantMessage[]> {
+    return this.http.get<AssistantMessage[]>(
+      `${this.api}/${userId}/conversations/${conversationId}/messages`);
+  }
+
+  sendMessage(userId: string, conversationId: string, message: string, email: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(
+      `${this.api}/${userId}/conversations/${conversationId}/chat`, { message, email });
+  }
+
+  clearConversationHistory(userId: string, conversationId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.api}/${userId}/conversations/${conversationId}/history`);
   }
 }

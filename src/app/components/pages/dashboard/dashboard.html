@@ -77,40 +77,113 @@
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" placeholder="Rechercher une société, un indicateur..."
+        <input type="text" placeholder="Rechercher une société, un symbole..."
           [value]="searchQuery" (input)="onSearchInput($any($event.target).value)">
         <div class="search-dropdown" *ngIf="showSearchDropdown">
-          <div class="search-result-item" *ngFor="let r of searchResults">
+          <button class="search-result-item" *ngFor="let r of searchResults"
+                  type="button" (click)="openInstrumentDetail(r)">
             <div class="search-result-left">
               <span class="search-result-symbol">{{ r.symbol || r.short_name }}</span>
               <span class="search-result-name">{{ r.full_name || r.short_name }}</span>
             </div>
             <div class="search-result-right">
               <span class="search-result-price" *ngIf="r.close_price">{{ r.close_price | number:'1.2-2' }}</span>
-              <span class="search-result-var" [class]="getVariationClass(r.price_variation_pct)" *ngIf="r.price_variation_pct != null">
+              <span class="search-result-var" [class]="getVariationClass(r.price_variation_pct)"
+                    *ngIf="r.price_variation_pct != null">
                 {{ formatVariation(r.price_variation_pct) }}
               </span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
+
       <div class="topbar-right">
+
+        <!-- Market summary chips -->
+        <div class="tb-market-chips" *ngIf="marketSummary && !isLoading">
+          <span class="tb-chip tb-chip-up">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="18 15 12 9 6 15"/>
+            </svg>
+            {{ marketSummary.hausse }}
+          </span>
+          <span class="tb-chip tb-chip-down">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            {{ marketSummary.baisse }}
+          </span>
+          <span class="tb-chip tb-chip-date">{{ marketSummary.date }}</span>
+        </div>
+
+        <!-- IA status -->
         <div class="status-badge">
           <span class="status-dot"></span>
           IA en ligne
         </div>
-        <button class="notif-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 01-3.46 0"/>
-          </svg>
-          <span class="notif-count" *ngIf="unreadAlerts > 0">{{ unreadAlerts }}</span>
-        </button>
+
+        <!-- Notification bell -->
+        <div class="notif-wrapper">
+          <button class="notif-btn" (click)="toggleNotifPanel($event)"
+                  [class.notif-active]="notifOpen" [title]="'Alertes (' + alerts.length + ')'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            <span class="notif-count" *ngIf="unreadAlerts > 0">{{ unreadAlerts }}</span>
+          </button>
+
+          <!-- Alerts dropdown -->
+          <div class="notif-dropdown" *ngIf="notifOpen" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <div class="nd-header">
+              <div class="nd-header-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                <span>Alertes du marché</span>
+              </div>
+              <span class="nd-count-badge" *ngIf="alerts.length > 0">{{ alerts.length }}</span>
+            </div>
+
+            <div class="nd-list" *ngIf="alerts.length > 0">
+              <div class="nd-item" *ngFor="let a of alerts; let i = index">
+                <div class="nd-item-icon"
+                     [style.background]="a.color === 'green' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                       [attr.stroke]="a.color === 'green' ? '#16a34a' : '#dc2626'" stroke-width="2.5">
+                    <polyline [attr.points]="a.color === 'green' ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </div>
+                <div class="nd-content">
+                  <span class="nd-item-title">{{ a.title }}</span>
+                  <span class="nd-item-sub">{{ a.sub }}</span>
+                </div>
+                <span class="nd-item-date">{{ a.date }}</span>
+              </div>
+            </div>
+
+            <div class="nd-empty" *ngIf="!alerts.length">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+              </svg>
+              <p>Aucune alerte pour le moment</p>
+            </div>
+
+            <div class="nd-footer">
+              Synchronisé avec les données du marché
+            </div>
+          </div>
+        </div>
+
+        <!-- User avatar -->
         <div class="user-menu-wrapper">
-          <button class="user-avatar" (click)="toggleUserMenu($event)">
+          <button class="user-avatar" (click)="toggleUserMenu($event)"
+                  [title]="(currentUser?.firstName || '') + ' ' + (currentUser?.lastName || '')">
             {{ currentUser ? getInitials(currentUser.firstName || 'U') : 'U' }}
           </button>
           <div class="user-dropdown" *ngIf="userMenuOpen">
@@ -139,6 +212,7 @@
             </button>
           </div>
         </div>
+
       </div>
     </header>
 
@@ -147,16 +221,30 @@
 
       <!-- PAGE HEADER -->
       <div class="page-header">
-        <div>
+        <div class="ph-left">
           <h1>Tableau de bord</h1>
-          <p class="welcome-text">Bienvenue, {{ currentUser?.firstName || 'Investisseur' }}</p>
+          <p class="welcome-text">
+            Bonjour, <strong>{{ currentUser?.firstName || 'Investisseur' }}</strong> —
+            analyse du marché en temps réel
+          </p>
         </div>
-        <button class="btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-          </svg>
-          Nouvelle analyse
-        </button>
+        <div class="ph-right" *ngIf="!isLoading && marketSummary">
+          <div class="ph-stat-chip">
+            <span class="ph-stat-dot green"></span>
+            <span class="ph-stat-label">{{ marketSummary.hausse }} hausse</span>
+          </div>
+          <div class="ph-stat-chip">
+            <span class="ph-stat-dot red"></span>
+            <span class="ph-stat-label">{{ marketSummary.baisse }} baisse</span>
+          </div>
+          <div class="ph-date-chip">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ marketSummary.date }}
+          </div>
+        </div>
       </div>
 
       <!-- ══════════════════════════════════════════════════════
@@ -296,30 +384,87 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════
-           ROW 2 : Recommandations + Alertes
+           ROW 2 : Recommandations IA + Alertes
       ══════════════════════════════════════════════════════ -->
       <div class="row-2col" *ngIf="!isLoading">
 
-        <!-- Recommandations récentes -->
-        <div class="card signals-card">
+        <!-- Recommandations IA récentes -->
+        <div class="card reco-preview-card">
           <div class="card-header">
-            <h3>Recommandations récentes</h3>
-            <a class="voir-tout">Voir tout ›</a>
+            <div class="reco-header-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                <polyline points="16 7 22 7 22 13"/>
+              </svg>
+              <h3>Recommandations IA</h3>
+              <span class="reco-count-chip" *ngIf="allRecos.length > 0">{{ allRecos.length }}</span>
+            </div>
+            <button class="voir-tout-btn" (click)="openRecoModal()" *ngIf="allRecos.length > 0">
+              Voir tout ›
+            </button>
           </div>
-          <div class="signal-list">
-            <div class="signal-item" *ngFor="let s of signals | slice:0:5">
-              <div class="signal-avatar">{{ getInitials(s.symbol) }}</div>
-              <div class="signal-info">
-                <span class="signal-symbol">{{ s.symbol }}</span>
-                <span class="signal-name">{{ s.short_name || s.shortName }}</span>
+
+          <!-- Skeleton loader -->
+          <div class="reco-skeleton" *ngIf="recoLoading">
+            <div class="reco-skel-item" *ngFor="let i of [1,2,3]">
+              <div class="skel skel-avatar"></div>
+              <div class="skel-lines">
+                <div class="skel skel-line-long"></div>
+                <div class="skel skel-line-short"></div>
               </div>
-              <div class="signal-right">
-                <span class="signal-badge" [ngClass]="getSignalClass(s.globalSignal)">
-                  {{ getSignalLabel(s.globalSignal) }}
+              <div class="skel skel-badge"></div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="reco-empty-state" *ngIf="!recoLoading && recentRecos.length === 0">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c7d2e0" stroke-width="1.5">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+            <p>Aucune recommandation générée</p>
+            <button class="btn-goto-reco" (click)="navigateTo('reco')">
+              Générer des recommandations →
+            </button>
+          </div>
+
+          <!-- Recommendation list -->
+          <div class="reco-list" *ngIf="!recoLoading && recentRecos.length > 0">
+            <div class="reco-item" *ngFor="let r of recentRecos"
+                 [style.borderLeftColor]="getRecoAccentColor(r.action)">
+              <div class="reco-avatar"
+                   [style.background]="getRecoAccentColor(r.action) + '18'"
+                   [style.color]="getRecoAccentColor(r.action)">
+                {{ getInitials(r.symbol) }}
+              </div>
+              <div class="reco-info">
+                <span class="reco-symbol">{{ r.symbol }}</span>
+                <span class="reco-company">{{ r.companyName }}</span>
+                <div class="reco-conf-bar">
+                  <div class="reco-conf-fill"
+                       [style.width.%]="r.confidence"
+                       [style.background]="getRecoConfidenceColor(r.confidence)">
+                  </div>
+                </div>
+              </div>
+              <div class="reco-right">
+                <span class="reco-action-badge" [ngClass]="getRecoActionClass(r.action)">
+                  {{ getRecoActionLabel(r.action) }}
                 </span>
-                <span class="signal-conf">Confiance : {{ getConfidence(s) }}%</span>
+                <span class="reco-pct-change"
+                      [class.reco-pos]="getRecoPriceChange(r) > 0"
+                      [class.reco-neg]="getRecoPriceChange(r) < 0">
+                  {{ getRecoPriceChange(r) > 0 ? '+' : '' }}{{ getRecoPriceChange(r) | number:'1.1-1' }}%
+                </span>
               </div>
             </div>
+          </div>
+
+          <div class="reco-footer" *ngIf="!recoLoading && recentRecos.length > 0">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            Powered by n8n · Analyse technique
           </div>
         </div>
 
@@ -348,6 +493,175 @@
 
       </div>
 
+      <!-- ══════════════════════════════════════════════════════
+           MODAL : Toutes les recommandations
+      ══════════════════════════════════════════════════════ -->
+      <div class="reco-modal-overlay" *ngIf="showRecoModal"
+           (click)="closeRecoModal()" (keydown.escape)="closeRecoModal()">
+        <div class="reco-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+
+          <!-- Modal header -->
+          <div class="reco-modal-hdr">
+            <div class="reco-modal-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                <polyline points="16 7 22 7 22 13"/>
+              </svg>
+              <span>Recommandations IA</span>
+              <span class="modal-count-badge">{{ allRecos.length }}</span>
+            </div>
+            <button class="reco-modal-close" (click)="closeRecoModal()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal filters -->
+          <div class="reco-modal-filters">
+            <button [class.mf-active]="recoModalFilter === 'all'"
+                    (click)="setRecoModalFilter('all')">
+              Toutes <span class="mf-count">{{ allRecos.length }}</span>
+            </button>
+            <button class="mf-achat" [class.mf-active]="recoModalFilter === 'ACHAT'"
+                    (click)="setRecoModalFilter('ACHAT')">
+              Achat <span class="mf-count">{{ countRecoByAction('ACHAT') }}</span>
+            </button>
+            <button class="mf-vente" [class.mf-active]="recoModalFilter === 'VENTE'"
+                    (click)="setRecoModalFilter('VENTE')">
+              Vente <span class="mf-count">{{ countRecoByAction('VENTE') }}</span>
+            </button>
+            <button class="mf-conserver" [class.mf-active]="recoModalFilter === 'CONSERVER'"
+                    (click)="setRecoModalFilter('CONSERVER')">
+              Conserver <span class="mf-count">{{ countRecoByAction('CONSERVER') }}</span>
+            </button>
+          </div>
+
+          <!-- Modal grid -->
+          <div class="reco-modal-grid" *ngIf="modalRecos.length > 0">
+            <div class="reco-modal-card" *ngFor="let r of modalRecos"
+                 [style.borderTopColor]="getRecoAccentColor(r.action)">
+
+              <!-- Card top -->
+              <div class="rmc-top">
+                <div class="rmc-avatar"
+                     [style.background]="getRecoAccentColor(r.action) + '18'"
+                     [style.color]="getRecoAccentColor(r.action)">
+                  {{ getInitials(r.symbol) }}
+                </div>
+                <div class="rmc-title-block">
+                  <span class="rmc-symbol">{{ r.symbol }}</span>
+                  <span class="rmc-company">{{ r.companyName }}</span>
+                </div>
+                <span class="rmc-action-badge" [ngClass]="getRecoActionClass(r.action)">
+                  {{ getRecoActionLabel(r.action) }}
+                </span>
+              </div>
+
+              <!-- Prices -->
+              <div class="rmc-prices">
+                <div class="rmc-price-col">
+                  <span class="rmc-plbl">Prix actuel</span>
+                  <span class="rmc-pval">{{ r.currentPrice | number:'1.0-0' }}</span>
+                </div>
+                <div class="rmc-arrow" [class.arrow-up]="r.targetPrice > r.currentPrice"
+                     [class.arrow-down]="r.targetPrice < r.currentPrice">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline [attr.points]="r.targetPrice >= r.currentPrice ? '5 12 12 5 19 12' : '5 12 12 19 19 12'"/>
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                  </svg>
+                </div>
+                <div class="rmc-price-col">
+                  <span class="rmc-plbl">Objectif</span>
+                  <span class="rmc-pval"
+                        [class.text-green]="r.targetPrice > r.currentPrice"
+                        [class.text-red]="r.targetPrice < r.currentPrice">
+                    {{ r.targetPrice | number:'1.0-0' }}
+                  </span>
+                </div>
+                <span class="rmc-pct"
+                      [class.reco-pos]="getRecoPriceChange(r) > 0"
+                      [class.reco-neg]="getRecoPriceChange(r) < 0">
+                  {{ getRecoPriceChange(r) > 0 ? '+' : '' }}{{ getRecoPriceChange(r) | number:'1.1-1' }}%
+                </span>
+              </div>
+
+              <!-- Indicators row -->
+              <div class="rmc-indicators">
+                <div class="rmc-ind">
+                  <span class="rmc-ind-lbl">RSI</span>
+                  <span class="rmc-ind-val"
+                        [class.ind-oversold]="r.rsi < 30"
+                        [class.ind-overbought]="r.rsi > 70">
+                    {{ r.rsi | number:'1.1-1' }}
+                  </span>
+                </div>
+                <div class="rmc-ind">
+                  <span class="rmc-ind-lbl">MACD</span>
+                  <span class="rmc-ind-val"
+                        [class.text-green]="r.macd > 0"
+                        [class.text-red]="r.macd < 0">
+                    {{ r.macd | number:'1.2-4' }}
+                  </span>
+                </div>
+                <div class="rmc-ind">
+                  <span class="rmc-ind-lbl">Risque</span>
+                  <span class="rmc-ind-val risk-chip" [ngClass]="getRecoRiskClass(r.riskLevel)">
+                    {{ r.riskLevel }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Confidence bar -->
+              <div class="rmc-conf">
+                <div class="rmc-conf-row">
+                  <span class="rmc-conf-lbl">Confiance IA</span>
+                  <span class="rmc-conf-pct" [style.color]="getRecoConfidenceColor(r.confidence)">
+                    {{ r.confidence | number:'1.0-0' }}%
+                  </span>
+                </div>
+                <div class="rmc-conf-track">
+                  <div class="rmc-conf-fill"
+                       [style.width.%]="r.confidence"
+                       [style.background]="getRecoConfidenceColor(r.confidence)">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rationale -->
+              <div class="rmc-rationale" *ngIf="r.rationale">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ r.rationale }}
+              </div>
+
+              <!-- Footer -->
+              <div class="rmc-footer">
+                <div class="rmc-signals">
+                  <span class="rmc-sig" [class.sig-on]="r.signalRsi === 'Buy'">RSI</span>
+                  <span class="rmc-sig" [class.sig-on]="r.signalMacd === 'Buy'">MACD</span>
+                  <span class="rmc-sig" [class.sig-on]="r.signalBb === 'Buy'">BB</span>
+                </div>
+                <span class="rmc-date">{{ formatRecoDate(r.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-empty" *ngIf="modalRecos.length === 0">
+            <p>Aucune recommandation pour ce filtre.</p>
+          </div>
+
+          <div class="reco-modal-footer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            Powered by n8n · Analyse technique
+          </div>
+        </div>
+      </div>
+
       <!-- Loading spinner for row 2 -->
       <div class="loading-overlay" *ngIf="isLoading">
         <div class="spinner"></div>
@@ -355,7 +669,7 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════════
-           ANALYSES DU MARCHÉ (kept from before)
+           ANALYSES DU MARCHÉ
       ══════════════════════════════════════════════════════ -->
       <div class="section-title" *ngIf="!isLoading">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -371,125 +685,230 @@
 
       <div *ngIf="!analyticsLoading && !isLoading">
 
-        <!-- Signal Distribution + Volume Trend -->
-        <div class="row-2col">
+        <!-- ── Row 1 : Sentiment Gauge + Top Mouvements ─────────────────── -->
+        <div class="row-2col analytics-row">
 
-          <div class="card analytics-card">
+          <!-- Sentiment Gauge -->
+          <div class="card gauge-card">
             <div class="card-header">
-              <h3>Distribution des signaux IA</h3>
-              <span class="date-badge" *ngIf="rsiZones">{{ rsiZones.date }}</span>
+              <h3>Sentiment du marché</h3>
+              <span class="date-badge" *ngIf="marketSummary?.date">{{ marketSummary.date }}</span>
             </div>
-            <div class="donut-wrapper" *ngIf="signalDistribution && signalDistribution.total > 0">
-              <svg viewBox="0 0 100 100" class="donut-svg">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" stroke-width="14"
-                  [attr.stroke-dasharray]="donutDashArray(signalDistribution.buy, signalDistribution.total)"
-                  [attr.stroke-dashoffset]="donutDashOffset(0, signalDistribution.total)"
-                  transform="rotate(-90 50 50)"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#ef4444" stroke-width="14"
-                  [attr.stroke-dasharray]="donutDashArray(signalDistribution.sell, signalDistribution.total)"
-                  [attr.stroke-dashoffset]="donutDashOffset(signalDistribution.buy, signalDistribution.total)"
-                  transform="rotate(-90 50 50)"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="14"
-                  [attr.stroke-dasharray]="donutDashArray(signalDistribution.hold, signalDistribution.total)"
-                  [attr.stroke-dashoffset]="donutDashOffset(signalDistribution.buy + signalDistribution.sell, signalDistribution.total)"
-                  transform="rotate(-90 50 50)"/>
-                <text x="50" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#1e293b">{{ signalDistribution.total }}</text>
-                <text x="50" y="58" text-anchor="middle" font-size="6" fill="#94a3b8">signaux</text>
+            <div class="gauge-body" *ngIf="marketSummary">
+              <svg viewBox="0 0 220 150" class="gauge-svg">
+                <!-- Background track -->
+                <path d="M 25 120 A 85 85 0 0 1 195 120" fill="none" stroke="#e2e8f0" stroke-width="20" stroke-linecap="butt"/>
+                <!-- Pessimiste zone (0–30 %) -->
+                <path d="M 25 120 A 85 85 0 0 1 60 51.2" fill="none" stroke="#ef4444" stroke-width="20" stroke-linecap="butt" opacity="0.8"/>
+                <!-- Neutre zone (30–70 %) -->
+                <path d="M 60 51.2 A 85 85 0 0 1 160 51.2" fill="none" stroke="#f59e0b" stroke-width="20" stroke-linecap="butt" opacity="0.8"/>
+                <!-- Optimiste zone (70–100 %) -->
+                <path d="M 160 51.2 A 85 85 0 0 1 195 120" fill="none" stroke="#22c55e" stroke-width="20" stroke-linecap="butt" opacity="0.8"/>
+                <!-- Needle -->
+                <line x1="110" y1="120"
+                      [attr.x2]="sentimentNeedle().x"
+                      [attr.y2]="sentimentNeedle().y"
+                      stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="110" cy="120" r="7" fill="#1e293b"/>
+                <circle cx="110" cy="120" r="3.5" fill="white"/>
+                <!-- Score -->
+                <text x="110" y="108" text-anchor="middle" font-size="24" font-weight="800" fill="#1e293b">{{ sentimentScore }}</text>
+                <text x="110" y="119" text-anchor="middle" font-size="8.5" fill="#94a3b8">Score / 100</text>
+                <!-- Zone labels -->
+                <text x="15" y="136" text-anchor="middle" font-size="7.5" fill="#ef4444" font-weight="600">Pessim.</text>
+                <text x="110" y="26"  text-anchor="middle" font-size="7.5" fill="#f59e0b" font-weight="600">Neutre</text>
+                <text x="205" y="136" text-anchor="middle" font-size="7.5" fill="#22c55e" font-weight="600">Optimis.</text>
               </svg>
-              <div class="donut-legend">
-                <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span><span class="legend-label">Achat</span><span class="legend-val">{{ signalDistribution.buy }}</span></div>
-                <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span><span class="legend-label">Vente</span><span class="legend-val">{{ signalDistribution.sell }}</span></div>
-                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span><span class="legend-label">Conserver</span><span class="legend-val">{{ signalDistribution.hold }}</span></div>
+              <div class="gauge-label" [style.color]="sentimentColor">{{ sentimentLabel }}</div>
+              <div class="gauge-stats">
+                <div class="gs-item">
+                  <span class="gs-dot" style="background:#22c55e"></span>
+                  <span>{{ marketSummary.hausse }} hausse</span>
+                </div>
+                <div class="gs-item">
+                  <span class="gs-dot" style="background:#ef4444"></span>
+                  <span>{{ marketSummary.baisse }} baisse</span>
+                </div>
+                <div class="gs-item">
+                  <span class="gs-dot" style="background:#94a3b8"></span>
+                  <span>{{ marketSummary.stable }} stable</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="card analytics-card">
+          <!-- Top Mouvements -->
+          <div class="card movers-card">
             <div class="card-header">
-              <h3>Volume journalier (30 jours)</h3>
-              <span class="date-badge">30j</span>
+              <h3>Top mouvements</h3>
+              <span class="date-badge" *ngIf="topMovers?.date">{{ topMovers.date }}</span>
             </div>
-            <div class="chart-wrapper" *ngIf="volumeTrend.length > 1">
-              <svg viewBox="0 0 300 110" class="chart-svg" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.03"/>
-                  </linearGradient>
-                </defs>
-                <path [attr.d]="areaPath(volumeTrend, 'totalVolume', 100)" fill="url(#volGrad)"/>
-                <path [attr.d]="linePath(volumeTrend, 'totalVolume')" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
-              </svg>
-              <div class="chart-xlabels">
-                <span *ngFor="let lbl of xLabels(volumeTrend)">{{ lbl.label }}</span>
+            <div class="movers-body">
+              <div class="movers-section">
+                <div class="movers-sub-title movers-gain">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="18 15 12 9 6 15"/>
+                  </svg>
+                  Hausses
+                </div>
+                <div class="mover-row" *ngFor="let g of topGainers">
+                  <span class="mover-symbol">{{ g.symbol || g.short_name }}</span>
+                  <div class="mover-track">
+                    <div class="mover-bar gain-bar" [style.width.%]="getMoverBarW(g.price_variation_pct)"></div>
+                  </div>
+                  <span class="mover-pct gain-pct">+{{ (+g.price_variation_pct).toFixed(2) }}%</span>
+                </div>
+              </div>
+              <div class="movers-section movers-mt">
+                <div class="movers-sub-title movers-loss">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                  Baisses
+                </div>
+                <div class="mover-row" *ngFor="let l of topLosers">
+                  <span class="mover-symbol">{{ l.symbol || l.short_name }}</span>
+                  <div class="mover-track">
+                    <div class="mover-bar loss-bar" [style.width.%]="getMoverBarW(l.price_variation_pct)"></div>
+                  </div>
+                  <span class="mover-pct loss-pct">{{ (+l.price_variation_pct).toFixed(2) }}%</span>
+                </div>
               </div>
             </div>
           </div>
 
         </div>
 
-        <!-- RSI Zones + Volatility + MACD -->
-        <div class="row-3col">
+        <!-- ── Row 2 : Reco Profile + RSI Histogram + Volume Trend ──────── -->
+        <div class="row-3col analytics-row">
 
-          <div class="card analytics-card">
+          <!-- Profil Recommandations IA -->
+          <div class="card reco-profile-card">
             <div class="card-header">
-              <h3>Zones RSI du marché</h3>
-              <span class="date-badge" *ngIf="rsiZones">{{ rsiZones.date }}</span>
+              <h3>Profil Recommandations IA</h3>
+              <span class="date-badge" *ngIf="recoProfile.total > 0">{{ recoProfile.lastDate }}</span>
             </div>
-            <div class="rsi-zones" *ngIf="rsiZones">
-              <div class="rsi-zone zone-buy">
-                <span class="zone-count">{{ rsiZones.oversold }}</span>
-                <span class="zone-label">Survendu<br><small>RSI &lt; 30</small></span>
-                <div class="zone-bar"><div class="zone-fill" style="background:#22c55e" [style.width.%]="(rsiZones.oversold / rsiZones.total) * 100"></div></div>
-              </div>
-              <div class="rsi-zone zone-neutral">
-                <span class="zone-count">{{ rsiZones.neutral }}</span>
-                <span class="zone-label">Neutre<br><small>30–70</small></span>
-                <div class="zone-bar"><div class="zone-fill" style="background:#94a3b8" [style.width.%]="(rsiZones.neutral / rsiZones.total) * 100"></div></div>
-              </div>
-              <div class="rsi-zone zone-sell">
-                <span class="zone-count">{{ rsiZones.overbought }}</span>
-                <span class="zone-label">Suracheté<br><small>RSI &gt; 70</small></span>
-                <div class="zone-bar"><div class="zone-fill" style="background:#ef4444" [style.width.%]="(rsiZones.overbought / rsiZones.total) * 100"></div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card analytics-card">
-            <div class="card-header">
-              <h3>Volatilité par marché</h3>
-              <span class="date-badge">20j</span>
-            </div>
-            <div class="vol-bars" *ngIf="marketVolatility.length > 0">
-              <div class="vol-bar-row" *ngFor="let v of marketVolatility | slice:0:6">
-                <span class="vol-market">{{ v.market_id }}</span>
-                <div class="vol-track">
-                  <div class="vol-fill" [style.width.%]="volBarWidth(v)"></div>
+            <div class="rp-body" *ngIf="recoProfile.total > 0">
+              <div class="rp-donut-wrap">
+                <svg viewBox="0 0 100 100" class="rp-donut">
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" stroke-width="14"
+                    [attr.stroke-dasharray]="donutDashArray(recoProfile.achat, recoProfile.total)"
+                    [attr.stroke-dashoffset]="donutDashOffset(0, recoProfile.total)"
+                    transform="rotate(-90 50 50)"/>
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#ef4444" stroke-width="14"
+                    [attr.stroke-dasharray]="donutDashArray(recoProfile.vente, recoProfile.total)"
+                    [attr.stroke-dashoffset]="donutDashOffset(recoProfile.achat, recoProfile.total)"
+                    transform="rotate(-90 50 50)"/>
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="14"
+                    [attr.stroke-dasharray]="donutDashArray(recoProfile.conserver, recoProfile.total)"
+                    [attr.stroke-dashoffset]="donutDashOffset(recoProfile.achat + recoProfile.vente, recoProfile.total)"
+                    transform="rotate(-90 50 50)"/>
+                  <text x="50" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#1e293b">{{ recoProfile.total }}</text>
+                  <text x="50" y="58" text-anchor="middle" font-size="6" fill="#94a3b8">signaux</text>
+                </svg>
+                <div class="rp-legend">
+                  <div class="rp-leg-item">
+                    <span class="rp-dot" style="background:#22c55e"></span>
+                    <span class="rp-leg-lbl">Achat</span>
+                    <span class="rp-leg-val">{{ recoProfile.achat }}</span>
+                  </div>
+                  <div class="rp-leg-item">
+                    <span class="rp-dot" style="background:#ef4444"></span>
+                    <span class="rp-leg-lbl">Vente</span>
+                    <span class="rp-leg-val">{{ recoProfile.vente }}</span>
+                  </div>
+                  <div class="rp-leg-item">
+                    <span class="rp-dot" style="background:#f59e0b"></span>
+                    <span class="rp-leg-lbl">Conserver</span>
+                    <span class="rp-leg-val">{{ recoProfile.conserver }}</span>
+                  </div>
                 </div>
-                <span class="vol-val">{{ v.avgVolatility | number:'1.2-2' }}%</span>
               </div>
+              <div class="rp-confidence">
+                <div class="rp-conf-row">
+                  <span class="rp-conf-lbl">Confiance moyenne IA</span>
+                  <span class="rp-conf-val" [style.color]="getRecoConfidenceColor(recoProfile.avgConf)">
+                    {{ recoProfile.avgConf }}%
+                  </span>
+                </div>
+                <div class="rp-conf-track">
+                  <div class="rp-conf-fill"
+                       [style.width.%]="recoProfile.avgConf"
+                       [style.background]="getRecoConfidenceColor(recoProfile.avgConf)"></div>
+                </div>
+              </div>
+            </div>
+            <div class="pv-empty small" *ngIf="recoProfile.total === 0">
+              <span>Aucune recommandation disponible.</span>
+              <button class="btn-link" (click)="navigateTo('reco')">Générer →</button>
             </div>
           </div>
 
-          <div class="card analytics-card">
+          <!-- RSI Histogram -->
+          <div class="card rsi-histo-card">
             <div class="card-header">
-              <h3>MACD momentum (30 jours)</h3>
-              <span class="date-badge">30j</span>
+              <h3>Distribution RSI</h3>
+              <span class="date-badge" *ngIf="signals.length > 0">{{ signals.length }} titres</span>
             </div>
-            <div class="chart-wrapper" *ngIf="macdTrend.length > 1">
-              <svg viewBox="0 0 300 110" class="chart-svg" preserveAspectRatio="none">
+            <div class="rsi-histo-body" *ngIf="signals.length > 0">
+              <div class="rsi-histo-chart">
+                <div class="rsi-bar-group" *ngFor="let b of rsiHistogram">
+                  <span class="rsi-bar-count">{{ b.count }}</span>
+                  <div class="rsi-bar-fill"
+                       [style.height.px]="(b.count / maxRsiCount) * 72"
+                       [style.background]="b.color"></div>
+                  <span class="rsi-bar-label">{{ b.label }}</span>
+                </div>
+              </div>
+              <div class="rsi-histo-legend">
+                <div class="rsi-hint rsi-hint-buy">
+                  <span class="rsi-hint-dot" style="background:#22c55e"></span> Survendu → achat potentiel
+                </div>
+                <div class="rsi-hint rsi-hint-sell">
+                  <span class="rsi-hint-dot" style="background:#ef4444"></span> Suracheté → vente potentielle
+                </div>
+              </div>
+            </div>
+            <div class="pv-empty small" *ngIf="signals.length === 0">
+              <span>Pas de signaux disponibles.</span>
+            </div>
+          </div>
+
+          <!-- Momentum MACD (30 j) -->
+          <div class="card vol-trend-card">
+            <div class="card-header">
+              <h3>Momentum MACD</h3>
+              <span class="date-badge">30 jours</span>
+            </div>
+            <div class="vol-trend-body" *ngIf="macdTrend.length > 1">
+              <div class="vol-meta-row">
+                <div class="macd-legend">
+                  <span class="macd-leg-pos">Positif = haussier</span>
+                  <span class="macd-leg-sep">·</span>
+                  <span class="macd-leg-neg">Négatif = baissier</span>
+                </div>
+                <span class="vol-count-lbl">{{ macdTrend.length }}j</span>
+              </div>
+              <svg viewBox="0 0 300 100" class="vol-svg" preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="macdGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
-                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.03"/>
+                  <linearGradient id="macdTGradPos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#22c55e" stop-opacity="0.02"/>
+                  </linearGradient>
+                  <linearGradient id="macdTGradNeg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ef4444" stop-opacity="0.02"/>
+                    <stop offset="100%" stop-color="#ef4444" stop-opacity="0.3"/>
                   </linearGradient>
                 </defs>
-                <path [attr.d]="areaPath(macdTrend, 'avgMacd', 100)" fill="url(#macdGrad)"/>
-                <path [attr.d]="linePath(macdTrend, 'avgMacd')" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+                <path [attr.d]="areaPath(macdTrend, 'avgMacd', 95)" fill="url(#macdTGradPos)"/>
+                <path [attr.d]="linePath(macdTrend, 'avgMacd')" fill="none" stroke="#6366f1" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
               </svg>
-              <div class="chart-xlabels">
+              <div class="vol-xlabels">
                 <span *ngFor="let lbl of xLabels(macdTrend)">{{ lbl.label }}</span>
               </div>
+            </div>
+            <div class="pv-empty small" *ngIf="macdTrend.length <= 1">
+              <span>Données MACD indisponibles.</span>
             </div>
           </div>
 
@@ -500,4 +919,156 @@
 
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       INSTRUMENT DETAIL MODAL (from search)
+  ══════════════════════════════════════════════════════ -->
+  <div class="instr-overlay" *ngIf="showInstrumentModal"
+       (click)="closeInstrumentModal()" (keydown.escape)="closeInstrumentModal()">
+    <div class="instr-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="instr-header">
+        <div class="instr-header-left">
+          <div class="instr-avatar">
+            {{ (instrumentModalResult?.symbol || instrumentModalResult?.short_name || '??').substring(0,2).toUpperCase() }}
+          </div>
+          <div class="instr-title-block">
+            <h2 class="instr-name">{{ instrumentModalResult?.short_name }}</h2>
+            <span class="instr-fullname">{{ instrumentModalResult?.full_name }}</span>
+          </div>
+        </div>
+        <button class="instr-close-btn" type="button" (click)="closeInstrumentModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Price row -->
+      <div class="instr-price-row" *ngIf="instrumentModalResult?.close_price">
+        <span class="instr-price">{{ instrumentModalResult.close_price | number:'1.2-2' }}</span>
+        <span class="instr-var" [class]="getVariationClass(instrumentModalResult?.price_variation_pct)"
+              *ngIf="instrumentModalResult?.price_variation_pct != null">
+          {{ formatVariation(instrumentModalResult.price_variation_pct) }}
+        </span>
+        <span class="instr-isin">ISIN: {{ instrumentModalResult?.isin }}</span>
+      </div>
+
+      <!-- Existing position banner -->
+      <div class="instr-existing-banner" *ngIf="existingPosition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <div class="instr-existing-info">
+          <span class="instr-existing-title">Vous possédez déjà cet instrument</span>
+          <span class="instr-existing-detail">
+            {{ existingPosition.quantity }} actions · Valeur actuelle :
+            {{ formatCurrency(existingPosition.currentPrice * existingPosition.quantity) }}
+            · P&amp;L :
+            <span [class]="existingPosition.unrealizedPL >= 0 ? 'pl-pos' : 'pl-neg'">
+              {{ existingPosition.unrealizedPL >= 0 ? '+' : '' }}{{ formatCurrency(existingPosition.unrealizedPL) }}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Recent OHLCV mini-table -->
+      <div class="instr-ohlcv" *ngIf="!instrumentLoading && instrumentOhlcv.length > 0">
+        <div class="instr-section-title">Historique récent ({{ instrumentOhlcv.length }} séances)</div>
+        <div class="instr-ohlcv-table">
+          <div class="instr-ohlcv-head">
+            <span>Date</span><span>Ouv.</span><span>Clôt.</span><span>Haut</span><span>Bas</span>
+          </div>
+          <div class="instr-ohlcv-row" *ngFor="let row of instrumentOhlcv.slice(0,5)">
+            <span class="ohlcv-date">{{ (row.session_date | date:'dd/MM') }}</span>
+            <span>{{ row.open_price | number:'1.2-2' }}</span>
+            <span [class]="row.close_price >= row.open_price ? 'ohlcv-up' : 'ohlcv-down'">
+              {{ row.close_price | number:'1.2-2' }}
+            </span>
+            <span>{{ row.high_price | number:'1.2-2' }}</span>
+            <span>{{ row.low_price | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="instr-loading" *ngIf="instrumentLoading">
+        <div class="spinner small"></div>
+        <span>Chargement des données...</span>
+      </div>
+
+      <!-- Buy form -->
+      <div class="instr-buy-section">
+        <div class="instr-section-title">Acheter cet instrument</div>
+        <div class="instr-buy-form">
+          <div class="instr-buy-row">
+            <div class="instr-field">
+              <label for="instr-qty">Quantité</label>
+              <input id="instr-qty" type="number" min="1" [(ngModel)]="instrBuyForm.quantity" class="instr-input">
+            </div>
+            <div class="instr-field">
+              <label for="instr-price">Prix unitaire</label>
+              <input id="instr-price" type="number" min="0.01" step="0.01" [(ngModel)]="instrBuyForm.price" class="instr-input">
+            </div>
+          </div>
+          <div class="instr-buy-row">
+            <div class="instr-field">
+              <label for="instr-sector">Secteur</label>
+              <select id="instr-sector" [(ngModel)]="instrBuyForm.sector" class="instr-input">
+                <option>Finance</option><option>Technologie</option><option>Énergie</option>
+                <option>Santé</option><option>Consommation</option><option>Industrie</option><option>Autres</option>
+              </select>
+            </div>
+            <div class="instr-field">
+              <label for="instr-asset">Classe d'actif</label>
+              <select id="instr-asset" [(ngModel)]="instrBuyForm.assetClass" class="instr-input">
+                <option>Actions</option><option>Obligations</option><option>ETF</option><option>Crypto</option>
+              </select>
+            </div>
+          </div>
+          <div class="instr-buy-total" [class.budget-exceeded]="instrBudgetExceeded">
+            <div class="instr-total-line">
+              <span>Total estimé</span>
+              <strong [class.amount-over]="instrBudgetExceeded">{{ instrBuyTotal | number:'1.2-2' }}</strong>
+            </div>
+            <div class="instr-capital-line" *ngIf="portfolioData?.availableCapital != null">
+              <span>Capital disponible</span>
+              <span class="capital-amount">{{ portfolioData.availableCapital | number:'1.2-2' }}</span>
+            </div>
+            <div class="instr-budget-bar" *ngIf="portfolioData?.availableCapital > 0">
+              <div class="instr-budget-fill"
+                   [style.width.%]="instrBudgetExceeded ? 100 : (instrBuyTotal / portfolioData.availableCapital * 100)"
+                   [class.fill-ok]="!instrBudgetExceeded"
+                   [class.fill-over]="instrBudgetExceeded">
+              </div>
+            </div>
+          </div>
+
+          <div class="instr-budget-alert" *ngIf="instrBudgetExceeded">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>
+              Budget insuffisant — il manque
+              <strong>{{ (instrBuyTotal - portfolioData.availableCapital) | number:'1.2-2' }}</strong>
+            </span>
+          </div>
+
+          <div class="instr-error" *ngIf="buyError && !instrBudgetExceeded">{{ buyError }}</div>
+          <div class="instr-buy-actions">
+            <button class="instr-cancel-btn" type="button" (click)="closeInstrumentModal()">Annuler</button>
+            <button class="instr-buy-btn" type="button" (click)="submitInstrumentBuy()"
+                    [disabled]="isBuying || instrBudgetExceeded"
+                    [class.btn-disabled-over]="instrBudgetExceeded">
+              <span *ngIf="!isBuying && !instrBudgetExceeded">Acheter</span>
+              <span *ngIf="instrBudgetExceeded">Budget insuffisant</span>
+              <span *ngIf="isBuying">Traitement...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>

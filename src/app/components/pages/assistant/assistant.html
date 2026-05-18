@@ -1,6 +1,6 @@
 <div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
 
-  <!-- SIDEBAR -->
+  <!-- ══ NAV SIDEBAR ══════════════════════════════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">
@@ -71,7 +71,7 @@
     </button>
   </aside>
 
-  <!-- MAIN -->
+  <!-- ══ MAIN ════════════════════════════════════════════════════════════════ -->
   <div class="main-content">
 
     <!-- TOPBAR -->
@@ -105,8 +105,92 @@
       </div>
     </header>
 
-    <!-- CHAT AREA -->
-    <div class="chat-page">
+    <!-- CHAT WORKSPACE -->
+    <div class="chat-workspace">
+
+      <!-- ── CONVERSATIONS PANEL ─────────────────────────────────────────── -->
+      <div class="conv-panel" [class.conv-panel--collapsed]="convPanelCollapsed">
+
+        <div class="conv-panel-header">
+          <span class="conv-panel-title" *ngIf="!convPanelCollapsed">Conversations</span>
+          <button class="new-chat-btn" (click)="createNewConversation()" title="Nouvelle conversation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span *ngIf="!convPanelCollapsed">Nouvelle conv.</span>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="conv-loading" *ngIf="conversationsLoading && !convPanelCollapsed">
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+
+        <!-- List -->
+        <div class="conv-list" *ngIf="!conversationsLoading">
+          <div *ngFor="let conv of conversations"
+               class="conv-item"
+               [class.conv-item--active]="activeConversation?.id === conv.id"
+               (click)="selectConversation(conv)">
+
+            <!-- Rename mode -->
+            <ng-container *ngIf="renamingId === conv.id; else displayMode">
+              <input class="rename-input"
+                     [(ngModel)]="renameValue"
+                     (keydown)="confirmRenameOnEnter($event, conv)"
+                     (blur)="confirmRename(conv)"
+                     (click)="$event.stopPropagation()"
+                     autofocus />
+            </ng-container>
+
+            <!-- Display mode -->
+            <ng-template #displayMode>
+              <div class="conv-item-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <div class="conv-item-body" *ngIf="!convPanelCollapsed">
+                <span class="conv-item-title">{{ conv.title }}</span>
+                <span class="conv-item-date">{{ formatDate(conv.lastMessageAt || conv.createdAt) }}</span>
+              </div>
+              <div class="conv-item-actions" *ngIf="!convPanelCollapsed">
+                <button class="conv-action-btn" title="Renommer" (click)="startRename(conv, $event)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="conv-action-btn conv-action-delete" title="Supprimer" (click)="deleteConversation(conv, $event)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                  </svg>
+                </button>
+              </div>
+            </ng-template>
+
+          </div>
+
+          <!-- Empty state -->
+          <div class="conv-empty" *ngIf="conversations.length === 0 && !convPanelCollapsed">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.35">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            <span>Aucune conversation</span>
+          </div>
+        </div>
+
+        <!-- Collapse toggle -->
+        <button class="conv-collapse-btn" (click)="toggleConvPanel()" [title]="convPanelCollapsed ? 'Ouvrir le panneau' : 'Réduire'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline [attr.points]="convPanelCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
+          </svg>
+        </button>
+
+      </div>
+
+      <!-- ── CHAT CARD ────────────────────────────────────────────────────── -->
       <div class="chat-card">
 
         <!-- Chat header -->
@@ -118,10 +202,12 @@
               </svg>
             </div>
             <div class="bot-header-info">
-              <span class="bot-name">InvestAI Sophia</span>
+              <span class="bot-name">
+                {{ activeConversation?.title || 'InvestAI Sophia' }}
+              </span>
               <span class="bot-status">
                 <span class="bot-status-dot"></span>
-                En ligne
+                InvestAI Sophia · En ligne
               </span>
             </div>
           </div>
@@ -132,7 +218,7 @@
               </svg>
               Powered by n8n · GPT
             </span>
-            <button class="clear-btn" (click)="clearHistory()" title="Effacer la conversation">
+            <button class="clear-btn" (click)="clearHistory()" title="Effacer les messages">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
@@ -145,10 +231,9 @@
         <!-- Messages -->
         <div class="messages-area">
 
-          <!-- History loading -->
           <div class="history-loading" *ngIf="historyLoading">
             <div class="typing-dots"><span></span><span></span><span></span></div>
-            <span>Chargement de l'historique...</span>
+            <span>Chargement...</span>
           </div>
 
           <div *ngIf="!historyLoading">
@@ -157,7 +242,6 @@
                  [class.msg-bot]="msg.role === 'bot'"
                  [class.msg-user]="msg.role === 'user'">
 
-              <!-- Bot message -->
               <ng-container *ngIf="msg.role === 'bot'">
                 <div class="bot-avatar-sm">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -170,7 +254,6 @@
                 </div>
               </ng-container>
 
-              <!-- User message -->
               <ng-container *ngIf="msg.role === 'user'">
                 <div class="bubble-wrap bubble-wrap-user">
                   <div class="bubble bubble-user">{{ msg.content }}</div>
@@ -199,7 +282,7 @@
         </div>
 
         <!-- Quick suggestions -->
-        <div class="suggestions" *ngIf="!isTyping">
+        <div class="suggestions" *ngIf="!isTyping && messages.length <= 1">
           <button class="suggestion-chip"
                   *ngFor="let s of suggestions"
                   (click)="useSuggestion(s)">
@@ -214,8 +297,8 @@
                     (keydown)="onEnter($event)"
                     placeholder="Posez votre question..."
                     rows="1"
-                    [disabled]="isTyping"></textarea>
-          <button class="send-btn" (click)="send()" [disabled]="!userInput.trim() || isTyping">
+                    [disabled]="isTyping || !activeConversation"></textarea>
+          <button class="send-btn" (click)="send()" [disabled]="!userInput.trim() || isTyping || !activeConversation">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>

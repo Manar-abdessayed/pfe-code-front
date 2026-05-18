@@ -1,9 +1,13 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Subject, Subscription, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Auth } from '../../../services/auth';
 import { ProfileService, UserProfile } from '../../../services/profile';
+import { DashboardService } from '../../../services/dashboard';
+import { PortfolioService } from '../../../services/portfolio';
 
 @Component({
   selector: 'app-profile',
@@ -12,7 +16,7 @@ import { ProfileService, UserProfile } from '../../../services/profile';
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
 
   currentUser: any = null;
   profile: UserProfile | null = null;
@@ -23,6 +27,24 @@ export class ProfileComponent implements OnInit {
   sidebarCollapsed = false;
   activeNav = 'profil';
   userMenuOpen = false;
+
+  // Topbar search
+  topbarQuery = '';
+  topbarResults: any[] = [];
+  topbarDropdown = false;
+
+  // Instrument modal (from search)
+  showInstrumentModal = false;
+  instrumentModalResult: any = null;
+  instrumentOhlcv: any[] = [];
+  instrumentLoading = false;
+  instrBuyForm = { quantity: 1, price: 0, sector: 'Finance', assetClass: 'Actions' };
+  isBuying = false;
+  buyError = '';
+  portfolioAvailableCapital = 0;
+
+  private readonly searchSubject = new Subject<string>();
+  private readonly searchSub: Subscription[] = [];
 
   // Form fields (local state)
   riskLevel = 5;
@@ -39,24 +61,46 @@ export class ProfileComponent implements OnInit {
   constructor(
     private authService: Auth,
     private profileService: ProfileService,
+    private readonly dashboardService: DashboardService,
+    private readonly portfolioService: PortfolioService,
     private router: Router
   ) {}
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (!target.closest('.user-menu-wrapper')) {
-      this.userMenuOpen = false;
-    }
+    if (!target.closest('.user-menu-wrapper')) this.userMenuOpen = false;
+    if (!target.closest('.topbar-search')) this.topbarDropdown = false;
   }
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    if (!this.currentUser) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    if (!this.currentUser) { this.router.navigate(['/login']); return; }
     this.loadProfile();
+
+    // Wire up topbar search with debounce
+    this.searchSub.push(
+      this.searchSubject.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => q.length >= 2 ? this.dashboardService.search(q) : of([]))
+      ).subscribe({
+        next: r => { this.topbarResults = r; this.topbarDropdown = r.length > 0; },
+        error: () => { this.topbarResults = []; this.topbarDropdown = false; }
+      })
+    );
+
+    // Load available capital for the buy form
+    if (this.currentUser?.id) {
+      this.portfolioService.getPortfolio(this.currentUser.id).subscribe({
+        next: p => { this.portfolioAvailableCapital = p.availableCapital ?? 0; },
+        error: () => {}
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub.forEach(s => s.unsubscribe());
   }
 
   loadProfile(): void {

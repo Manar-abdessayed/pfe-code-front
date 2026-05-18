@@ -43,7 +43,11 @@ export class RecommendationsService {
     return this.http.get<Recommendation[]>(`${this.api}?filter=${filter}`);
   }
 
-  generate(profile: GenerateRequest): Observable<{ message: string; count: number }> {
-    return this.http.post<{ message: string; count: number }>(`${this.api}/generate`, profile);
+  generate(): Observable<{ message: string; count: number }> {
+    return this.http.post<{ message: string; count: number }>(`${this.api}/generate`, {});
+  }
+
+  saveBatch(recs: Recommendation[]): Observable<{ message: string; count: number }> {
+    return this.http.post<{ message: string; count: number }>(`${this.api}/save-batch`, recs);
   }
 }

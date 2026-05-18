@@ -80,7 +80,20 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" placeholder="Rechercher une société, un indicateur...">
+        <input type="text" placeholder="Rechercher une société, un symbole..."
+               [value]="topbarQuery" (input)="onTopbarSearch($any($event.target).value)">
+        <div class="search-dropdown" *ngIf="topbarDropdown">
+          <button class="search-result-item" *ngFor="let r of topbarResults"
+                  type="button" (click)="openFromTopbar(r)">
+            <div class="search-result-left">
+              <span class="search-result-symbol">{{ r.symbol || r.short_name }}</span>
+              <span class="search-result-name">{{ r.full_name || r.short_name }}</span>
+            </div>
+            <div class="search-result-right">
+              <span class="search-result-price" *ngIf="r.close_price">{{ r.close_price | number:'1.2-2' }}</span>
+            </div>
+          </button>
+        </div>
       </div>
       <div class="topbar-right">
         <div class="status-badge">

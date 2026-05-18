@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil, switchMap, of } from 'rxjs';
 import { Auth } from '../../../services/auth';
 import {
   PortfolioService,
@@ -11,6 +11,7 @@ import {
   TradingInstrument,
   Transaction,
 } from '../../../services/portfolio';
+import { DashboardService } from '../../../services/dashboard';
 
 interface DonutSegment {
   color: string;
@@ -63,6 +64,12 @@ export class PortfolioComponent implements OnInit, OnDestroy {
   buyError = '';
 
   private readonly buySearch$ = new Subject<string>();
+
+  // ── Topbar search ──────────────────────────────────────────────────────────
+  topbarQuery = '';
+  topbarResults: any[] = [];
+  topbarDropdown = false;
+  private readonly topbarSearch$ = new Subject<string>();
 
   // ── Sell modal ─────────────────────────────────────────────────────────────
   showSellModal = false;
@@ -126,6 +133,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
   constructor(
     private readonly authService: Auth,
     private readonly portfolioService: PortfolioService,
+    private readonly dashboardService: DashboardService,
     private readonly router: Router
   ) {}
 
@@ -133,6 +141,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (!target.closest('.user-menu-wrapper')) this.userMenuOpen = false;
+    if (!target.closest('.topbar-search')) this.topbarDropdown = false;
   }
 
   ngOnInit(): void {
@@ -145,6 +154,18 @@ export class PortfolioComponent implements OnInit, OnDestroy {
     this.buySearch$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(q => this.fetchInstruments(q));
+
+    // Topbar search
+    this.topbarSearch$
+      .pipe(
+        debounceTime(300), distinctUntilChanged(),
+        switchMap(q => q.length >= 2 ? this.dashboardService.search(q) : of([])),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: r => { this.topbarResults = r; this.topbarDropdown = r.length > 0; },
+        error: () => { this.topbarResults = []; this.topbarDropdown = false; }
+      });
   }
 
   ngOnDestroy(): void {
@@ -186,6 +207,34 @@ export class PortfolioComponent implements OnInit, OnDestroy {
       next: (txs) => { this.transactions = txs; this.transactionsLoading = false; },
       error: () => { this.transactionsLoading = false; },
     });
+  }
+
+  // ── Topbar search ──────────────────────────────────────────────────────────
+
+  onTopbarSearch(q: string): void {
+    this.topbarQuery = q;
+    this.topbarSearch$.next(q);
+    if (q.length < 2) this.topbarDropdown = false;
+  }
+
+  openFromTopbar(result: any): void {
+    this.topbarDropdown = false;
+    this.topbarQuery = '';
+    const inst: TradingInstrument = {
+      isin: result.isin,
+      short_name: result.symbol || result.short_name,
+      full_name: result.full_name || result.short_name,
+      currency: result.currency || 'XOF',
+      close_price: Number(result.close_price) || 0,
+      price_variation_pct: result.price_variation_pct != null ? Number(result.price_variation_pct) : null,
+    };
+    this.showBuyModal = true;
+    this.buySearchQuery = inst.short_name;
+    this.buyInstruments = [inst];
+    this.selectedInstrument = inst;
+    this.buyForm.price = inst.close_price ?? 0;
+    this.buyForm.quantity = 1;
+    this.buyError = '';
   }
 
   // ── Buy modal ──────────────────────────────────────────────────────────────
