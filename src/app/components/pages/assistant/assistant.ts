@@ -47,10 +47,10 @@ export class AssistantComponent implements OnInit, AfterViewChecked {
 
   readonly suggestions = [
     'Analysez mon portefeuille actuel',
-    'Quelles actions ont un signal d\'achat aujourd\'hui ?',
-    'Quels titres sont en zone de survente (RSI < 30) ?',
-    'Quelle est la performance du marché ce mois ?',
-    'Quels sont les titres les plus volatils ?',
+    'Quelles sont les dernières recommandations d\'achat ?',
+    'Quels titres me recommandez-vous de vendre ?',
+    'Quelle est la répartition de mon portefeuille par secteur ?',
+    'Quels titres présentent un risque élevé dans mes positions ?',
   ];
 
   private readonly navRoutes: Record<string, string> = {
@@ -244,14 +244,14 @@ export class AssistantComponent implements OnInit, AfterViewChecked {
           this.isTyping = false;
           this.shouldScrollBottom = true;
 
-          // Update conversation's lastMessageAt and auto-title locally
+          // Update conversation's lastMessageAt and auto-title
           const idx = this.conversations.findIndex(c => c.id === convId);
           if (idx !== -1) {
-            if (this.conversations[idx].title === 'Nouvelle conversation') {
-              this.conversations[idx].title = text.length > 50 ? text.slice(0, 50) + '…' : text;
+            // Only update title when server confirmed a meaningful one (greetings are deferred)
+            if (this.conversations[idx].title === 'Nouvelle conversation' && res.title) {
+              this.conversations[idx].title = res.title;
             }
             this.conversations[idx].lastMessageAt = new Date().toISOString();
-            // Re-sort: move to top
             const updated = this.conversations.splice(idx, 1)[0];
             this.conversations.unshift(updated);
             if (this.activeConversation?.id === convId) this.activeConversation = updated;

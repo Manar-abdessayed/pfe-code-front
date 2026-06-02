@@ -316,8 +316,12 @@
               <span class="summary-val">{{ getHorizonLabel() }}</span>
             </div>
             <div class="summary-row">
-              <span class="summary-key">Capital</span>
-              <span class="summary-val">{{ availableCapital | number:'1.0-0' }} €</span>
+              <span class="summary-key">Capital total</span>
+              <span class="summary-val">{{ formatEur(totalCapitalEur) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-key">Liquidités</span>
+              <span class="summary-val">{{ formatEur(liquiditesEur) }}</span>
             </div>
             <div class="summary-row">
               <span class="summary-key">Secteurs</span>
@@ -334,16 +338,19 @@
               </svg>
               Modifier le capital
             </h4>
-            <p class="capital-edit-hint">Capital disponible pour investissement</p>
+            <p class="capital-edit-hint">Capital disponible pour investissement (en FCFA)</p>
             <div class="capital-edit-row">
               <input
                 type="number"
                 [(ngModel)]="availableCapital"
                 class="capital-edit-input"
                 min="0"
-                placeholder="Montant en €">
-              <span class="capital-edit-currency">€</span>
+                placeholder="Montant en FCFA">
+              <span class="capital-edit-currency">FCFA</span>
             </div>
+            <p class="capital-edit-hint" *ngIf="availableCapital > 0">
+              ≈ {{ formatEur(availableCapital / FCFA_TO_EUR) }}
+            </p>
             <div class="capital-edit-actions">
               <button class="btn-capital-save" (click)="saveCapital()" [disabled]="isSavingCapital">
                 <svg *ngIf="!isSavingCapital" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

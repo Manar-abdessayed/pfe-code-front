@@ -1,95 +1,74 @@
 <div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
 
-  <!-- SIDEBAR -->
+  <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.9" />
+          <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" fill="currentColor" opacity="0.9"/>
         </svg>
       </div>
       <span class="logo-text" *ngIf="!sidebarCollapsed">InvestAI Assistant</span>
     </div>
-
     <div class="admin-badge" *ngIf="!sidebarCollapsed">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
       </svg>
       Espace Admin
     </div>
-
     <nav class="sidebar-nav">
-      <a class="nav-item" [class.active]="activeNav==='supervision'" (click)="navigateTo('supervision')"
-        style="cursor:pointer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
+      <a class="nav-item" [class.active]="activeNav==='supervision'" (click)="navigateTo('supervision')" style="cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <span *ngIf="!sidebarCollapsed">Supervision</span>
       </a>
       <a class="nav-item" [class.active]="activeNav==='users'" (click)="navigateTo('users')" style="cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87" />
-          <path d="M16 3.13a4 4 0 010 7.75" />
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
         </svg>
         <span *ngIf="!sidebarCollapsed">Utilisateurs</span>
       </a>
-      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 11 12 14 22 4" />
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-        </svg>
-        <span *ngIf="!sidebarCollapsed">Validation</span>
-      </a>
       <a class="nav-item" [class.active]="activeNav==='config'" (click)="navigateTo('config')" style="cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path
-            d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
         </svg>
         <span *ngIf="!sidebarCollapsed">Configuration</span>
       </a>
     </nav>
-
     <div class="sidebar-bottom">
       <button class="switch-mode-btn" (click)="switchToUserMode()" [title]="sidebarCollapsed ? 'Mode utilisateur' : ''">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
         </svg>
         <span *ngIf="!sidebarCollapsed">Mode utilisateur</span>
       </button>
     </div>
-
     <button class="sidebar-toggle" (click)="toggleSidebar()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'" />
+        <polyline [attr.points]="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"/>
       </svg>
     </button>
   </aside>
 
-  <!-- MAIN -->
+  <!-- ═══════════ MAIN ═══════════ -->
   <div class="main-content">
 
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-left">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87" />
-          <path d="M16 3.13a4 4 0 010 7.75" />
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
         </svg>
         <span>Utilisateurs</span>
       </div>
       <div class="topbar-center">
         <div class="topbar-search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" placeholder="Rechercher par nom ou email..." (input)="onSearch($any($event.target).value)">
+          <input type="text" placeholder="Rechercher par nom, email..."
+                 [value]="searchQuery" (input)="onSearch($any($event.target).value)">
         </div>
       </div>
       <div class="topbar-right">
@@ -111,22 +90,73 @@
     </header>
 
     <!-- PAGE CONTENT -->
-    <div class="page-content">
+    <div class="page-content" [class.panel-open]="selectedUser">
 
-      <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+      <!-- PAGE HEADER -->
+      <div class="page-header">
         <div>
           <h1>Gestion des utilisateurs</h1>
-          <p class="page-sub">{{ filteredUsers.length }} utilisateur{{ filteredUsers.length !== 1 ? 's' : '' }}
-            enregistré{{ filteredUsers.length !== 1 ? 's' : '' }}</p>
+          <p class="page-sub">{{ filteredUsers.length }} utilisateur{{ filteredUsers.length !== 1 ? 's' : '' }} affiché{{ filteredUsers.length !== 1 ? 's' : '' }}</p>
         </div>
-        <div class="filter-chips">
+        <div class="filter-row">
           <button class="chip" [class.active]="activeRiskFilter === null" (click)="setRiskFilter(null)">Tous</button>
-          <button class="chip chip-low" [class.active]="activeRiskFilter === 'low'"
-            (click)="setRiskFilter('low')">Prudent</button>
-          <button class="chip chip-medium" [class.active]="activeRiskFilter === 'medium'"
-            (click)="setRiskFilter('medium')">Modéré</button>
-          <button class="chip chip-high" [class.active]="activeRiskFilter === 'high'"
-            (click)="setRiskFilter('high')">Agressif</button>
+          <button class="chip chip-blue"  [class.active]="activeRiskFilter === 'low'"    (click)="setRiskFilter('low')">Prudent ({{ prudentCount }})</button>
+          <button class="chip chip-amber" [class.active]="activeRiskFilter === 'medium'" (click)="setRiskFilter('medium')">Modéré ({{ modereCount }})</button>
+          <button class="chip chip-red"   [class.active]="activeRiskFilter === 'high'"   (click)="setRiskFilter('high')">Agressif ({{ agressifCount }})</button>
+        </div>
+      </div>
+
+      <!-- STATS CARDS -->
+      <div class="stats-row" *ngIf="!isLoading">
+        <div class="stat-card">
+          <div class="stat-icon si-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-val">{{ users.length }}</span>
+            <span class="stat-lbl">Utilisateurs total</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-val">{{ activeCount }}</span>
+            <span class="stat-lbl">Avec positions actives</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-val">{{ fmtCurrency(totalPortfolio) }}</span>
+            <span class="stat-lbl">Valeur totale gérée</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="risk-mini-bars">
+              <div class="rmb rmb-blue"  [style.flex]="prudentCount || 1"  title="Prudent: {{ prudentCount }}"></div>
+              <div class="rmb rmb-amber" [style.flex]="modereCount || 1"   title="Modéré: {{ modereCount }}"></div>
+              <div class="rmb rmb-red"   [style.flex]="agressifCount || 1" title="Agressif: {{ agressifCount }}"></div>
+            </div>
+            <span class="stat-lbl">Distribution des risques</span>
+          </div>
         </div>
       </div>
 
@@ -136,61 +166,276 @@
         <p>Chargement des utilisateurs...</p>
       </div>
 
-      <!-- TABLE -->
-      <div class="table-card" *ngIf="!isLoading">
+      <!-- TABLE CARD -->
+      <div class="table-wrap" *ngIf="!isLoading">
         <table class="users-table">
           <thead>
             <tr>
               <th>Utilisateur</th>
               <th>Email</th>
               <th>Profil risque</th>
+              <th>Activité</th>
               <th>Positions</th>
               <th>Portefeuille</th>
               <th>Capital dispo.</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let u of filteredUsers">
+            <tr *ngFor="let u of filteredUsers"
+                [class.row-selected]="selectedUser?.id === u.id"
+                (click)="selectUser(u)">
               <td>
                 <div class="user-cell">
-                  <div class="user-initials">{{ getInitials(u) }}</div>
+                  <div class="user-av" [style.background]="avatarGradient(u)">{{ getInitials(u) }}</div>
                   <div class="user-names">
                     <span class="user-fullname">{{ u.firstName }} {{ u.lastName }}</span>
                     <span class="user-role">{{ u.role }}</span>
                   </div>
+                  <svg *ngIf="selectedUser?.id === u.id" width="14" height="14" viewBox="0 0 24 24"
+                       fill="none" stroke="#6366f1" stroke-width="2.5" class="row-arrow">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
                 </div>
               </td>
-              <td class="cell-email">{{ u.email }}</td>
+              <td class="cell-secondary">{{ u.email }}</td>
               <td>
                 <span class="risk-badge" [class]="getRiskClass(u.riskLevel)">
-                  {{ getRiskLabel(u.riskLevel) }}
+                  {{ u.riskTolerance || getRiskLabel(u.riskLevel) }}
                 </span>
               </td>
-              <td class="cell-num">
-                <span class="pos-count">{{ u.positionCount }}</span>
-              </td>
-              <td class="cell-num">{{ fmtCurrency(u.portfolioValue) }}</td>
-              <td class="cell-num">{{ fmtCurrency(u.availableCapital) }}</td>
+              <td class="cell-secondary">{{ fmtDateShort(u.lastActivityAt) }}</td>
               <td>
-                <button class="btn-delete" (click)="deleteUser(u)" title="Supprimer cet utilisateur">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                    <path d="M10 11v6M14 11v6" />
-                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-                  </svg>
-                  Supprimer
-                </button>
+                <span class="pos-pill" [class.pos-pill-active]="u.positionCount > 0">{{ u.positionCount }}</span>
               </td>
+              <td class="cell-mono">{{ fmtCurrency(u.portfolioValue) }}</td>
+              <td class="cell-mono">{{ fmtCurrency(u.availableCapital) }}</td>
             </tr>
             <tr *ngIf="filteredUsers.length === 0">
-              <td colspan="7" class="empty-row">Aucun utilisateur trouvé.</td>
+              <td colspan="7" class="empty-row">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <span>Aucun utilisateur trouvé</span>
+              </td>
             </tr>
           </tbody>
         </table>
+        <div class="table-footer" *ngIf="filteredUsers.length">
+          <span>{{ filteredUsers.length }} utilisateur{{ filteredUsers.length !== 1 ? 's' : '' }}</span>
+          <span class="table-hint">Cliquez sur une ligne pour voir les détails</span>
+        </div>
       </div>
 
-    </div>
-  </div>
-</div>
+    </div><!-- end page-content -->
+
+    <!-- ═══════════ DETAIL PANEL OVERLAY ═══════════ -->
+    <div class="panel-overlay" *ngIf="selectedUser" (click)="closePanel()"></div>
+
+    <!-- ═══════════ DETAIL PANEL ═══════════ -->
+    <aside class="detail-panel" [class.panel-visible]="selectedUser" *ngIf="selectedUser">
+
+      <!-- Panel header -->
+      <div class="panel-head">
+        <div class="panel-user-hero">
+          <div class="panel-avatar" [style.background]="avatarGradient(selectedUser)">
+            {{ getInitials(selectedUser) }}
+          </div>
+          <div class="panel-user-info">
+            <h2>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h2>
+            <span class="panel-email">{{ selectedUser.email }}</span>
+            <div class="panel-badges">
+              <span class="role-pill">{{ selectedUser.role }}</span>
+              <span class="risk-badge" [class]="getRiskClass(selectedUser.riskLevel)">
+                {{ selectedUser.riskTolerance || getRiskLabel(selectedUser.riskLevel) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <button class="close-btn" (click)="closePanel()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Skeleton loader -->
+      <div class="panel-skeleton" *ngIf="detailLoading">
+        <div class="sk-stat-row">
+          <div class="sk-block sk-stat"></div>
+          <div class="sk-block sk-stat"></div>
+          <div class="sk-block sk-stat"></div>
+        </div>
+        <div class="sk-block sk-section-title"></div>
+        <div class="sk-block sk-line"></div>
+        <div class="sk-block sk-line sk-line-short"></div>
+        <div class="sk-block sk-section-title"></div>
+        <div class="sk-block sk-line"></div>
+        <div class="sk-block sk-line"></div>
+        <div class="sk-block sk-line sk-line-short"></div>
+      </div>
+
+      <!-- Panel body (loaded) -->
+      <div class="panel-body" *ngIf="!detailLoading && userDetail">
+
+        <!-- KPI micro-stats -->
+        <div class="panel-kpis">
+          <div class="pkpi">
+            <span class="pkpi-val">{{ fmtCurrency(userDetail.portfolioValue) }}</span>
+            <span class="pkpi-lbl">Portefeuille</span>
+          </div>
+          <div class="pkpi pkpi-divider"></div>
+          <div class="pkpi">
+            <span class="pkpi-val" [class.gain-pos]="userDetail.gainLoss >= 0" [class.gain-neg]="userDetail.gainLoss < 0">
+              {{ userDetail.gainLoss >= 0 ? '+' : '' }}{{ userDetail.gainLossPct.toFixed(1) }}%
+            </span>
+            <span class="pkpi-lbl">Perf. totale</span>
+          </div>
+          <div class="pkpi pkpi-divider"></div>
+          <div class="pkpi">
+            <span class="pkpi-val">{{ userDetail.conversationCount }}</span>
+            <span class="pkpi-lbl">Conv. IA</span>
+          </div>
+        </div>
+
+        <!-- Profil investisseur -->
+        <div class="panel-section">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            Profil investisseur
+          </div>
+
+          <!-- Risk gauge -->
+          <div class="risk-gauge-wrap">
+            <div class="rg-labels">
+              <span>Niveau de risque</span>
+              <span class="rg-val" [style.color]="getRiskColor(userDetail.riskLevel)">
+                {{ userDetail.riskLevel }}/10
+              </span>
+            </div>
+            <div class="rg-track">
+              <div class="rg-fill" [style.width]="(userDetail.riskLevel / 10 * 100) + '%'"
+                   [style.background]="getRiskColor(userDetail.riskLevel)"></div>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="ir-label">Tolérance</span>
+              <span class="ir-val">{{ userDetail.riskTolerance || getRiskLabel(userDetail.riskLevel) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="ir-label">Objectif</span>
+              <span class="ir-val">{{ fmtGoal(userDetail.investmentGoal) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="ir-label">Horizon</span>
+              <span class="ir-val">{{ fmtHorizon(userDetail.investmentHorizon) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="ir-label">Capital dispo.</span>
+              <span class="ir-val font-mono">{{ fmtCurrency(userDetail.availableCapital) }}</span>
+            </div>
+            <div class="info-row" *ngIf="userDetail.sectors?.length">
+              <span class="ir-label">Secteurs</span>
+              <div class="sector-tags">
+                <span class="sector-tag" *ngFor="let s of userDetail.sectors">{{ s }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Positions -->
+        <div class="panel-section" *ngIf="userDetail.positions?.length">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+            </svg>
+            Positions ({{ userDetail.positionCount }})
+          </div>
+          <div class="positions-list">
+            <div class="pos-row" *ngFor="let p of userDetail.positions">
+              <div class="pos-left">
+                <span class="pos-symbol">{{ p.symbol }}</span>
+                <span class="pos-name">{{ p.companyName }}</span>
+              </div>
+              <div class="pos-right">
+                <span class="pos-value font-mono">{{ fmtCurrency(p.value) }}</span>
+                <span class="pos-gl" [class.gl-pos]="p.gainLoss >= 0" [class.gl-neg]="p.gainLoss < 0">
+                  {{ p.gainLoss >= 0 ? '+' : '' }}{{ p.gainLossPct.toFixed(1) }}%
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="pos-total-row">
+            <span>P&L total</span>
+            <span [class.gl-pos]="userDetail.gainLoss >= 0" [class.gl-neg]="userDetail.gainLoss < 0" class="font-mono">
+              {{ userDetail.gainLoss >= 0 ? '+' : '' }}{{ fmtCurrency(userDetail.gainLoss) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="panel-section" *ngIf="!userDetail.positions?.length">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            </svg>
+            Positions
+          </div>
+          <div class="empty-positions">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            </svg>
+            <span>Aucune position ouverte</span>
+          </div>
+        </div>
+
+        <!-- Activité -->
+        <div class="panel-section">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Activité
+          </div>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="ir-label">Inscrit le</span>
+              <span class="ir-val">{{ fmtDate(userDetail.createdAt) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="ir-label">Dernière activité</span>
+              <span class="ir-val">{{ fmtDate(userDetail.lastActivityAt) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="ir-label">Téléphone</span>
+              <span class="ir-val">{{ userDetail.phoneNumber || 'Non renseigné' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel-actions">
+          <button class="btn-danger" *ngIf="!showDeleteConfirm" (click)="showDeleteConfirm = true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+            </svg>
+            Supprimer le compte
+          </button>
+          <div class="confirm-delete" *ngIf="showDeleteConfirm">
+            <span>Confirmer la suppression ?</span>
+            <div class="confirm-btns">
+              <button class="btn-confirm-yes" (click)="deleteUser(userDetail)">Supprimer</button>
+              <button class="btn-confirm-no"  (click)="showDeleteConfirm = false">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end panel-body -->
+    </aside><!-- end detail-panel -->
+
+  </div><!-- end main-content -->
+</div><!-- end app-layout -->

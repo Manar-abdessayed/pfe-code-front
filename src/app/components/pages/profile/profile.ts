@@ -42,6 +42,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isBuying = false;
   buyError = '';
   portfolioAvailableCapital = 0;
+  portfolioTotalValue = 0;
+
+  // Taux fixe XOF (FCFA) → EUR (parité officielle)
+  readonly FCFA_TO_EUR = 655.957;
 
   private readonly searchSubject = new Subject<string>();
   private readonly searchSub: Subscription[] = [];
@@ -90,10 +94,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Load available capital for the buy form
+    // Load portfolio totals for EUR conversion display
     if (this.currentUser?.id) {
       this.portfolioService.getPortfolio(this.currentUser.id).subscribe({
-        next: p => { this.portfolioAvailableCapital = p.availableCapital ?? 0; },
+        next: p => {
+          this.portfolioAvailableCapital = p.availableCapital ?? 0;
+          this.portfolioTotalValue = p.totalValue ?? 0;
+        },
         error: () => {}
       });
     }
@@ -199,6 +206,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.investmentGoal === 'REVENUS') return 'Revenus';
     if (this.investmentGoal === 'PRESERVATION') return 'Préservation';
     return 'Croissance';
+  }
+
+  /** Capital total du portefeuille (positions + liquidités) converti en EUR */
+  get totalCapitalEur(): number {
+    return (this.portfolioTotalValue + this.portfolioAvailableCapital) / this.FCFA_TO_EUR;
+  }
+
+  /** Liquidités seules converties en EUR */
+  get liquiditesEur(): number {
+    return this.portfolioAvailableCapital / this.FCFA_TO_EUR;
+  }
+
+  formatEur(val: number): string {
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val) + ' €';
   }
 
   getCompletionPercent(): number {

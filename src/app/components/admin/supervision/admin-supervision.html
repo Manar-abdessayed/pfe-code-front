@@ -1,6 +1,6 @@
 <div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed">
 
-  <!-- SIDEBAR -->
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">
@@ -29,16 +29,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
         </svg>
         <span *ngIf="!sidebarCollapsed">Utilisateurs</span>
-      </a>
-      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-        <span *ngIf="!sidebarCollapsed">Validation</span>
       </a>
       <a class="nav-item" [class.active]="activeNav==='config'" (click)="navigateTo('config')" style="cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -66,7 +60,7 @@
     </button>
   </aside>
 
-  <!-- MAIN -->
+  <!-- ═══════════════ MAIN ═══════════════ -->
   <div class="main-content">
 
     <!-- TOPBAR -->
@@ -90,10 +84,10 @@
           <span class="status-dot"></span>
           IA en ligne
         </div>
-        <button class="notif-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        <button class="icon-btn" title="Rafraîchir" (click)="loadAll()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
           </svg>
         </button>
         <div class="user-menu-wrapper">
@@ -133,66 +127,25 @@
     <!-- PAGE CONTENT -->
     <div class="page-content">
 
+      <!-- PAGE HEADER -->
       <div class="page-header">
-        <div>
+        <div class="page-header-left">
           <h1>Supervision</h1>
           <p class="page-sub">Surveillance en temps réel du système et des performances</p>
         </div>
-        <div class="all-ok-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Tout opérationnel
-        </div>
-      </div>
-
-      <!-- STAT CARDS -->
-      <div class="stats-row" *ngIf="!isLoading && stats">
-        <div class="stat-card">
-          <div class="stat-icon stat-blue">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        <div class="page-header-right">
+          <span class="last-update">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.totalUsers | number }}</span>
-            <span class="stat-label">Utilisateurs actifs</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-amber">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            Mis à jour {{ fmtTime(lastUpdate) }}
+          </span>
+          <div class="system-status-badge" [class.status-ok]="systemOk" [class.status-warn]="!systemOk">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline *ngIf="systemOk" points="20 6 9 17 4 12"/>
+              <path *ngIf="!systemOk" d="M12 9v4M12 17h.01"/>
             </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.totalPositions | number }}</span>
-            <span class="stat-label">Positions enregistrées</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-green">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ fmtPortfolio(stats.totalPortfolioValue) }}</span>
-            <span class="stat-label">Valeur des portefeuilles</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-purple">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-              <polyline points="16 7 22 7 22 13"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.totalInstruments | number }}</span>
-            <span class="stat-label">Instruments disponibles</span>
+            {{ systemOk ? 'Tout opérationnel' : 'Alerte système' }}
           </div>
         </div>
       </div>
@@ -203,118 +156,343 @@
         <p>Chargement des données...</p>
       </div>
 
-      <!-- CHARTS ROW -->
-      <div class="charts-row" *ngIf="!isLoading">
-        <!-- Utilisateurs actifs -->
+      <!-- STAT CARDS -->
+      <div class="stats-row" *ngIf="!isLoading && stats">
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Utilisateurs actifs</span>
+            <span class="stat-value">{{ stats.totalUsers | number }}</span>
+            <span class="stat-trend trend-up">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="18 15 12 9 6 15"/>
+              </svg>
+              Inscrits sur la plateforme
+            </span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-amber">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Positions enregistrées</span>
+            <span class="stat-value">{{ stats.totalPositions | number }}</span>
+            <span class="stat-trend trend-neutral">Positions actives</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Valeur des portefeuilles</span>
+            <span class="stat-value">{{ fmtPortfolio(stats.totalPortfolioValue) }}</span>
+            <span class="stat-trend trend-up">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="18 15 12 9 6 15"/>
+              </svg>
+              Valeur totale gérée
+            </span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Instruments disponibles</span>
+            <span class="stat-value">{{ stats.totalInstruments | number }}</span>
+            <span class="stat-trend trend-neutral">Actifs trackés</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-teal">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Latence IA moyenne</span>
+            <span class="stat-value">{{ avgResponseTime }}<small>ms</small></span>
+            <span class="stat-trend" [class.trend-up]="avgResponseTime < 350" [class.trend-warn]="avgResponseTime >= 350">
+              Min {{ minResponseTime }}ms / Max {{ maxResponseTime }}ms
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CHARTS GRID -->
+      <div class="charts-grid" *ngIf="!isLoading">
+
+        <!-- Chart 1: Activité utilisateurs (24h) — bezier line -->
         <div class="chart-card">
           <div class="chart-header">
-            <span class="chart-title">Utilisateurs actifs (24h)</span>
-            <div class="chart-header-right">
-              <span class="chart-peak" *ngIf="!chartLoading && userActivityData.length">
-                Pic : {{ peakUsers }} utilisateurs
+            <div class="chart-title-group">
+              <span class="chart-title">Activité utilisateurs (24h)</span>
+              <span class="chart-sub">Sessions actives par heure</span>
+            </div>
+            <div class="chart-badges">
+              <span class="cbadge cbadge-green" *ngIf="!chartLoading && userActivityData.length">
+                Pic&nbsp;: {{ peakUsers }}
               </span>
-              <span class="chart-badge chart-badge-teal">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-                Temps réel
+              <span class="cbadge cbadge-teal">
+                <span class="live-dot"></span> Temps réel
               </span>
             </div>
           </div>
-          <!-- Chart loading skeleton -->
+
           <div class="chart-skeleton" *ngIf="chartLoading">
-            <div class="skeleton-bar"></div>
+            <div class="skeleton-wave"></div>
           </div>
+
           <svg *ngIf="!chartLoading && userActivityData.length"
-               [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
+               [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto;display:block">
             <defs>
-              <linearGradient id="areaGrad1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#0f1629" stop-opacity="0.15"/>
-                <stop offset="100%" stop-color="#0f1629" stop-opacity="0.01"/>
+              <linearGradient id="grad-activity" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.01"/>
               </linearGradient>
             </defs>
+            <!-- Grid lines -->
             <line *ngFor="let y of yLabels(userActivityData)"
               [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
-              stroke="#f0f0f0" stroke-width="1"/>
+              stroke="#f1f5f9" stroke-width="1"/>
+            <!-- Y labels -->
             <text *ngFor="let y of yLabels(userActivityData)"
-              [attr.x]="PL-6" [attr.y]="y.y+4" text-anchor="end"
+              [attr.x]="PL-7" [attr.y]="y.y+4" text-anchor="end"
               font-size="10" fill="#94a3b8">{{ y.label }}</text>
+            <!-- X labels -->
             <text *ngFor="let x of xLabels(userActivityData)"
               [attr.x]="x.x" [attr.y]="H-8" text-anchor="middle"
               font-size="10" fill="#94a3b8">{{ x.label }}</text>
-            <path [attr.d]="areaPath(userActivityData)" fill="url(#areaGrad1)"/>
-            <path [attr.d]="linePath(userActivityData)"
-              fill="none" stroke="#0f1629" stroke-width="2" stroke-linejoin="round"/>
-            <!-- Current hour indicator dot -->
+            <!-- Area fill -->
+            <path [attr.d]="smoothAreaPath(userActivityData)" fill="url(#grad-activity)"/>
+            <!-- Line -->
+            <path [attr.d]="smoothLinePath(userActivityData)"
+              fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linejoin="round" class="chart-line"/>
+            <!-- Current hour dot -->
             <circle *ngIf="currentHourPoint"
               [attr.cx]="currentHourPoint.x" [attr.cy]="currentHourPoint.y"
-              r="4" fill="#0f1629" stroke="white" stroke-width="2"/>
+              r="5" fill="#6366f1" stroke="white" stroke-width="2.5" class="hour-dot"/>
           </svg>
         </div>
 
-        <!-- Temps réponse IA -->
+        <!-- Chart 2: Inscriptions 7 jours — bar chart -->
         <div class="chart-card">
           <div class="chart-header">
-            <span class="chart-title">Temps de réponse IA moyen</span>
-            <span class="chart-badge chart-badge-amber">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              ~280ms
-            </span>
+            <div class="chart-title-group">
+              <span class="chart-title">Inscriptions (7 derniers jours)</span>
+              <span class="chart-sub">{{ totalRegistrations }} nouveaux utilisateurs cette semaine</span>
+            </div>
+            <span class="cbadge cbadge-blue">Semaine courante</span>
           </div>
-          <svg [attr.width]="W" [attr.height]="H" [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto">
+
+          <svg *ngIf="registrationData.length"
+               [attr.viewBox]="'0 0 '+W+' '+BCH" style="width:100%;height:auto;display:block">
+            <!-- Grid lines -->
+            <line *ngFor="let y of barYLabels(registrationData)"
+              [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
+              stroke="#f1f5f9" stroke-width="1"/>
+            <!-- Y labels -->
+            <text *ngFor="let y of barYLabels(registrationData)"
+              [attr.x]="PL-7" [attr.y]="y.y+4" text-anchor="end"
+              font-size="10" fill="#94a3b8">{{ y.label }}</text>
+            <!-- Bars -->
+            <g *ngFor="let b of barItems; let idx = index" class="bar-group">
+              <defs>
+                <linearGradient [attr.id]="'bg-'+idx" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0.7"/>
+                </linearGradient>
+              </defs>
+              <rect [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h"
+                rx="4" [attr.fill]="'url(#bg-'+idx+')'" class="bar-rect"/>
+              <!-- Day label -->
+              <text [attr.x]="b.lx" [attr.y]="BCH-PB+16" text-anchor="middle"
+                font-size="11" fill="#94a3b8">{{ b.label }}</text>
+              <!-- Count on top -->
+              <text *ngIf="b.count > 0"
+                [attr.x]="b.lx" [attr.y]="b.y - 5" text-anchor="middle"
+                font-size="10" font-weight="600" fill="#475569">{{ b.count }}</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Chart 3: Distribution profils risque — donut -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <span class="chart-title">Distribution profils de risque</span>
+              <span class="chart-sub">Répartition des {{ stats?.totalUsers || 0 }} utilisateurs</span>
+            </div>
+          </div>
+
+          <div class="donut-wrapper" *ngIf="riskSegments.length">
+            <svg width="180" height="180" viewBox="0 0 180 180" class="donut-svg">
+              <!-- Background ring -->
+              <circle cx="90" cy="90" [attr.r]="DR" fill="none" stroke="#f1f5f9" [attr.stroke-width]="20"/>
+              <!-- Segments -->
+              <circle *ngFor="let s of donutSegments"
+                cx="90" cy="90" [attr.r]="DR" fill="none"
+                [attr.stroke]="s.color" [attr.stroke-width]="20"
+                [attr.stroke-dasharray]="s.dash"
+                [attr.stroke-dashoffset]="s.offset"
+                transform="rotate(-90 90 90)"
+                class="donut-segment"/>
+              <!-- Center value -->
+              <text x="90" y="84" text-anchor="middle"
+                font-size="26" font-weight="700" fill="#0f1629">{{ stats?.totalUsers || 0 }}</text>
+              <text x="90" y="102" text-anchor="middle"
+                font-size="11" fill="#94a3b8">utilisateurs</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item" *ngFor="let s of riskSegments">
+                <span class="legend-dot" [style.background]="s.color"></span>
+                <span class="legend-label">{{ s.label }}</span>
+                <span class="legend-pct">{{ s.percentage }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart 4: Temps de réponse IA — area chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <span class="chart-title">Temps de réponse IA</span>
+              <span class="chart-sub">Latence OpenAI sur 24h</span>
+            </div>
+            <div class="chart-badges">
+              <span class="cbadge cbadge-amber">~{{ avgResponseTime }}ms</span>
+            </div>
+          </div>
+
+          <svg [attr.viewBox]="'0 0 '+W+' '+H" style="width:100%;height:auto;display:block">
             <defs>
-              <linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.15"/>
-                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.01"/>
+              <linearGradient id="grad-latency" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/>
               </linearGradient>
             </defs>
-            <line *ngFor="let y of yLabels(responseTimeData)"
+            <!-- Grid lines -->
+            <line *ngFor="let y of yLabels(responseTimeData, 'ms')"
               [attr.x1]="PL" [attr.y1]="y.y" [attr.x2]="W-PR" [attr.y2]="y.y"
-              stroke="#f0f0f0" stroke-width="1"/>
-            <text *ngFor="let y of yLabels(responseTimeData)"
-              [attr.x]="PL-6" [attr.y]="y.y+4" text-anchor="end"
-              font-size="10" fill="#94a3b8">{{ y.label }}ms</text>
+              stroke="#f1f5f9" stroke-width="1"/>
+            <!-- Y labels -->
+            <text *ngFor="let y of yLabels(responseTimeData, 'ms')"
+              [attr.x]="PL-7" [attr.y]="y.y+4" text-anchor="end"
+              font-size="10" fill="#94a3b8">{{ y.label }}</text>
+            <!-- X labels -->
             <text *ngFor="let x of xLabels(responseTimeData)"
               [attr.x]="x.x" [attr.y]="H-8" text-anchor="middle"
               font-size="10" fill="#94a3b8">{{ x.label }}</text>
-            <path [attr.d]="areaPath(responseTimeData)" fill="url(#areaGrad2)"/>
-            <path [attr.d]="linePath(responseTimeData)"
-              fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+            <!-- Area fill -->
+            <path [attr.d]="smoothAreaPath(responseTimeData)" fill="url(#grad-latency)"/>
+            <!-- Line -->
+            <path [attr.d]="smoothLinePath(responseTimeData)"
+              fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linejoin="round" class="chart-line"/>
           </svg>
         </div>
-      </div>
 
-      <!-- ALERTS -->
-      <div class="alerts-card" *ngIf="!isLoading">
-        <div class="alerts-header">
-          <h3>Alertes système</h3>
-          <span class="all-ok-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Tout opérationnel
-          </span>
-        </div>
-        <div class="alert-list">
-          <div class="alert-row" *ngFor="let a of alerts">
-            <div class="alert-dot" [style.background]="alertIconColor(a.type)">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-                <polyline *ngIf="a.type==='success'" points="20 6 9 17 4 12"/>
-                <circle *ngIf="a.type==='info'" cx="12" cy="12" r="1" fill="white"/>
-                <path *ngIf="a.type==='warning'" d="M12 9v4M12 17h.01"/>
-              </svg>
+      </div><!-- end charts-grid -->
+
+      <!-- BOTTOM ROW: System services + Alerts -->
+      <div class="bottom-row" *ngIf="!isLoading">
+
+        <!-- Services -->
+        <div class="services-card">
+          <div class="card-header">
+            <h3>Services système</h3>
+            <span class="cbadge" [class.cbadge-green]="systemOk" [class.cbadge-warn]="!systemOk">
+              {{ systemOk ? 'Tout opérationnel' : 'Alerte' }}
+            </span>
+          </div>
+          <div class="service-list">
+            <div class="service-row" *ngFor="let svc of systemServices">
+              <div class="service-indicator" [style.background]="serviceColor(svc.status)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline *ngIf="svc.status==='ok'" points="20 6 9 17 4 12"/>
+                  <path *ngIf="svc.status==='warning'" d="M12 9v4M12 17h.01"/>
+                  <line *ngIf="svc.status==='error'" x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+              </div>
+              <div class="service-body">
+                <span class="service-name">{{ svc.name }}</span>
+                <span class="service-detail">{{ svc.detail }}</span>
+              </div>
+              <div class="service-right">
+                <span class="service-latency" *ngIf="svc.latency">{{ svc.latency }}ms</span>
+                <span class="service-time">{{ svc.lastCheck }}</span>
+              </div>
             </div>
-            <div class="alert-body">
-              <span class="alert-title">{{ a.title }}</span>
-              <span class="alert-meta">{{ a.category }} · {{ a.time }}</span>
-            </div>
-            <span class="alert-type-badge" [style.color]="alertIconColor(a.type)">{{ a.type }}</span>
           </div>
         </div>
-      </div>
 
-    </div>
-  </div>
-</div>
+        <!-- Alerts -->
+        <div class="alerts-card">
+          <div class="card-header">
+            <h3>Alertes système</h3>
+            <span class="cbadge cbadge-green">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Tout opérationnel
+            </span>
+          </div>
+          <div class="alert-list">
+            <div class="alert-row" *ngFor="let a of alerts">
+              <div class="alert-dot" [style.background]="alertColor(a.type)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline *ngIf="a.type==='success'" points="20 6 9 17 4 12"/>
+                  <circle  *ngIf="a.type==='info'"    cx="12" cy="12" r="1" fill="white"/>
+                  <path    *ngIf="a.type==='warning'" d="M12 9v4M12 17h.01"/>
+                  <line    *ngIf="a.type==='error'"   x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+              </div>
+              <div class="alert-body">
+                <span class="alert-title">{{ a.title }}</span>
+                <span class="alert-meta">{{ a.category }} · {{ a.time }}</span>
+              </div>
+              <span class="alert-badge" [style.color]="alertColor(a.type)">
+                {{ a.type | uppercase }}
+              </span>
+            </div>
+            <div class="alert-empty" *ngIf="alerts.length === 0">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Aucune alerte active</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end bottom-row -->
+
+    </div><!-- end page-content -->
+  </div><!-- end main-content -->
+</div><!-- end app-layout -->

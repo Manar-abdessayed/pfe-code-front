@@ -464,7 +464,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(val: number): string {
-    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val) + ' €';
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val) + ' FCFA';
   }
 
   getInitials(symbol: string): string {

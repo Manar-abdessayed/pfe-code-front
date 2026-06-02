@@ -7,6 +7,9 @@ export interface AdminStats {
   totalPositions: number;
   totalPortfolioValue: number;
   totalInstruments: number;
+  newUsersThisWeek?: number;
+  avgResponseTime?: number;
+  userGrowthPercent?: number;
 }
 
 export interface AdminUser {
@@ -17,11 +20,36 @@ export interface AdminUser {
   phoneNumber: string;
   role: string;
   riskLevel: number;
+  riskTolerance: string;
   investmentGoal: string;
   investmentHorizon: string;
   availableCapital: number;
   positionCount: number;
   portfolioValue: number;
+  createdAt?: string;
+  lastActivityAt?: string;
+}
+
+export interface AdminUserPosition {
+  symbol: string;
+  companyName: string;
+  quantity: number;
+  purchasePrice: number;
+  currentPrice: number;
+  value: number;
+  gainLoss: number;
+  gainLossPct: number;
+  sector: string;
+  assetClass: string;
+  purchaseDate: string;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  gainLoss: number;
+  gainLossPct: number;
+  conversationCount: number;
+  sectors: string[];
+  positions: AdminUserPosition[];
 }
 
 export interface AdminAlert {
@@ -34,6 +62,26 @@ export interface AdminAlert {
 export interface ActiveUserPoint {
   hour: string;
   value: number;
+}
+
+export interface RegistrationPoint {
+  day: string;
+  count: number;
+}
+
+export interface RiskSegment {
+  label: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface SystemServiceStatus {
+  name: string;
+  status: 'ok' | 'warning' | 'error';
+  latency?: number;
+  detail: string;
+  lastCheck?: string;
 }
 
 export interface AdminConfig {
@@ -80,6 +128,22 @@ export class AdminService {
 
   getActiveUsers(): Observable<ActiveUserPoint[]> {
     return this.http.get<ActiveUserPoint[]>(`${this.api}/active-users`);
+  }
+
+  getUserDetails(id: string): Observable<AdminUserDetail> {
+    return this.http.get<AdminUserDetail>(`${this.api}/users/${id}/details`);
+  }
+
+  getRegistrationTrend(): Observable<RegistrationPoint[]> {
+    return this.http.get<RegistrationPoint[]>(`${this.api}/registration-trend`);
+  }
+
+  getRiskDistribution(): Observable<RiskSegment[]> {
+    return this.http.get<RiskSegment[]>(`${this.api}/risk-distribution`);
+  }
+
+  getSystemServices(): Observable<SystemServiceStatus[]> {
+    return this.http.get<SystemServiceStatus[]>(`${this.api}/system-services`);
   }
 
   getConfig(): Observable<AdminConfig> {

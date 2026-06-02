@@ -21,6 +21,7 @@ export interface AssistantMessage {
 export interface ChatResponse {
   response: string;
   messageId?: string;
+  title?: string;
   error?: boolean;
 }
 

@@ -1,11 +1,11 @@
-import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Auth } from '../../../services/auth';
-import { AdminService, AdminUser } from '../../../services/admin';
+import { AdminService, AdminUser, AdminUserDetail } from '../../../services/admin';
 
 @Component({
   selector: 'app-admin-users',
@@ -22,12 +22,24 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   activeNav = 'users';
   userMenuOpen = false;
-  searchQuery = '';
-  searchSubject = new Subject<string>();
-  searchSubscription?: Subscription;
-  activeRiskFilter: string | null = null;
 
-  private readonly currencyFmt = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  searchQuery = '';
+  activeRiskFilter: string | null = null;
+  private searchSubject = new Subject<string>();
+  private searchSub?: Subscription;
+
+  // Detail panel
+  selectedUser: AdminUser | null = null;
+  userDetail: AdminUserDetail | null = null;
+  detailLoading = false;
+  showDeleteConfirm = false;
+
+  private readonly currency = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  readonly AVATAR_COLORS = [
+    ['#6366f1','#8b5cf6'], ['#3b82f6','#06b6d4'], ['#10b981','#6366f1'],
+    ['#f59e0b','#ef4444'], ['#ec4899','#8b5cf6'], ['#14b8a6','#3b82f6'],
+  ];
 
   constructor(
     private readonly authService: Auth,
@@ -37,8 +49,12 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
-    if (!(e.target as HTMLElement).closest('.user-menu-wrapper')) this.userMenuOpen = false;
+    const t = e.target as HTMLElement;
+    if (!t.closest('.user-menu-wrapper')) this.userMenuOpen = false;
   }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void { this.closePanel(); }
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
@@ -46,73 +62,84 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       this.router.navigate(['/login']); return;
     }
     this.loadUsers();
-
-    this.searchSubscription = this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      this.applyFilters();
-    });
+    this.searchSub = this.searchSubject.pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.applyFilters());
   }
 
-  ngOnDestroy(): void {
-    if (this.searchSubscription) {
-      this.searchSubscription.unsubscribe();
-    }
-  }
+  ngOnDestroy(): void { this.searchSub?.unsubscribe(); }
 
   loadUsers(): void {
     this.isLoading = true;
     this.adminService.getUsers().subscribe({
-      next: (users) => { 
-        this.users = users; 
-        this.applyFilters(); 
-        this.isLoading = false; 
-      },
+      next: (u) => { this.users = u; this.applyFilters(); this.isLoading = false; },
       error: () => { this.isLoading = false; },
     });
   }
 
-  onSearch(q: string): void {
-    this.searchQuery = q;
-    this.searchSubject.next(q);
-  }
+  onSearch(q: string): void { this.searchQuery = q; this.searchSubject.next(q); }
 
-  setRiskFilter(level: string | null): void {
-    this.activeRiskFilter = level;
-    this.applyFilters();
-  }
+  setRiskFilter(f: string | null): void { this.activeRiskFilter = f; this.applyFilters(); }
 
   applyFilters(): void {
-    let filtered = this.users;
-    
+    let list = this.users;
     if (this.searchQuery) {
       const lq = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(u =>
-        (u.firstName + ' ' + u.lastName).toLowerCase().includes(lq) ||
-        u.email.toLowerCase().includes(lq) ||
-        u.role.toLowerCase().includes(lq)
+      list = list.filter(u =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(lq) ||
+        u.email.toLowerCase().includes(lq)
       );
     }
-    
     if (this.activeRiskFilter) {
-      filtered = filtered.filter(u => {
-        if (this.activeRiskFilter === 'low') return u.riskLevel <= 3;
-        if (this.activeRiskFilter === 'medium') return u.riskLevel > 3 && u.riskLevel <= 6;
-        if (this.activeRiskFilter === 'high') return u.riskLevel > 6;
+      list = list.filter(u => {
+        const r = u.riskLevel;
+        if (this.activeRiskFilter === 'low')    return r <= 3;
+        if (this.activeRiskFilter === 'medium') return r > 3 && r <= 6;
+        if (this.activeRiskFilter === 'high')   return r > 6;
         return true;
       });
     }
-    
-    this.filteredUsers = filtered;
+    this.filteredUsers = list;
   }
 
-  deleteUser(user: AdminUser): void {
-    if (!confirm(`Supprimer le compte de ${user.firstName} ${user.lastName} et toutes ses positions ?`)) return;
-    this.adminService.deleteUser(user.id).subscribe({
-      next: () => this.loadUsers(),
-      error: (err) => console.error('Erreur suppression', err),
+  // ── Detail panel ───────────────────────────────────────────────────────────
+
+  selectUser(user: AdminUser): void {
+    if (this.selectedUser?.id === user.id) { this.closePanel(); return; }
+    this.selectedUser = user;
+    this.userDetail = null;
+    this.detailLoading = true;
+    this.showDeleteConfirm = false;
+    this.adminService.getUserDetails(user.id).subscribe({
+      next: (d) => { this.userDetail = d; this.detailLoading = false; },
+      error: () => { this.detailLoading = false; },
     });
+  }
+
+  closePanel(): void {
+    this.selectedUser = null;
+    this.userDetail = null;
+    this.showDeleteConfirm = false;
+  }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+
+  deleteUser(user: AdminUser): void {
+    this.adminService.deleteUser(user.id).subscribe({
+      next: () => { this.closePanel(); this.loadUsers(); },
+      error: (err) => console.error('Suppression échouée', err),
+    });
+  }
+
+  // ── Formatting ─────────────────────────────────────────────────────────────
+
+  getInitials(u: AdminUser): string {
+    return ((u.firstName?.[0] || '') + (u.lastName?.[0] || '')).toUpperCase() || '??';
+  }
+
+  avatarGradient(u: AdminUser): string {
+    const idx = (u.firstName?.charCodeAt(0) || 0) % this.AVATAR_COLORS.length;
+    const [a, b] = this.AVATAR_COLORS[idx];
+    return `linear-gradient(135deg, ${a}, ${b})`;
   }
 
   getRiskLabel(level: number): string {
@@ -127,28 +154,61 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     return 'risk-high';
   }
 
-  getInitials(u: AdminUser): string {
-    return ((u.firstName?.[0] || '') + (u.lastName?.[0] || '')).toUpperCase() || '??';
+  getRiskColor(level: number): string {
+    if (level <= 3) return '#3b82f6';
+    if (level <= 6) return '#f59e0b';
+    return '#ef4444';
   }
+
+  fmtCurrency(v: number): string { return this.currency.format(v) + ' €'; }
+
+  fmtGoal(g: string): string {
+    const map: Record<string, string> = {
+      CROISSANCE: 'Croissance', REVENUS: 'Revenus', PRESERVATION: 'Préservation'
+    };
+    return map[g] || g || 'Non défini';
+  }
+
+  fmtHorizon(h: string): string {
+    const map: Record<string, string> = { COURT: 'Court terme', MOYEN: 'Moyen terme', LONG: 'Long terme' };
+    return map[h] || h || 'Non défini';
+  }
+
+  fmtDate(d?: string): string {
+    if (!d) return 'Non renseigné';
+    try {
+      return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch { return d; }
+  }
+
+  fmtDateShort(d?: string): string {
+    if (!d) return '—';
+    try {
+      return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    } catch { return d; }
+  }
+
+  // ── Computed stats from users list ─────────────────────────────────────────
+
+  get totalPortfolio(): number { return this.users.reduce((s, u) => s + u.portfolioValue, 0); }
+  get activeCount(): number   { return this.users.filter(u => u.positionCount > 0).length; }
+  get prudentCount(): number  { return this.users.filter(u => u.riskLevel <= 3).length; }
+  get modereCount(): number   { return this.users.filter(u => u.riskLevel > 3 && u.riskLevel <= 6).length; }
+  get agressifCount(): number { return this.users.filter(u => u.riskLevel > 6).length; }
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
 
   getAdminInitials(): string {
-    const f = this.currentUser?.firstName?.[0] || '';
-    const l = this.currentUser?.lastName?.[0] || '';
-    return (f + l).toUpperCase();
+    return ((this.currentUser?.firstName?.[0] || '') + (this.currentUser?.lastName?.[0] || '')).toUpperCase();
   }
-
-  fmtCurrency(v: number): string { return this.currencyFmt.format(v) + ' €'; }
 
   navigateTo(nav: string): void {
     this.activeNav = nav;
-    const routes: Record<string,string> = { supervision:'/admin', users:'/admin/users', config:'/admin/config', profil:'/profile', settings:'/settings' };
-    if (routes[nav]) this.router.navigate([routes[nav]]);
+    const r: Record<string, string> = { supervision:'/admin', users:'/admin/users', config:'/admin/config', profil:'/profile', settings:'/settings' };
+    if (r[nav]) this.router.navigate([r[nav]]);
   }
 
-  switchToUserMode(): void {
-    this.router.navigate(['/dashboard']);
-  }
-
+  switchToUserMode(): void { this.router.navigate(['/dashboard']); }
   toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
   toggleUserMenu(e: MouseEvent): void { e.stopPropagation(); this.userMenuOpen = !this.userMenuOpen; }
   logout(): void { this.authService.logout(); this.router.navigate(['/login']); }

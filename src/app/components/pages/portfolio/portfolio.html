@@ -352,8 +352,8 @@
                       </div>
                     </td>
                     <td class="num">{{ pos.quantity | number:'1.0-4' }}</td>
-                    <td class="num">{{ pos.purchasePrice | number:'1.2-2' }} €</td>
-                    <td class="num">{{ pos.currentPrice | number:'1.2-2' }} €</td>
+                    <td class="num">{{ pos.purchasePrice | number:'1.2-2' }} FCFA</td>
+                    <td class="num">{{ pos.currentPrice | number:'1.2-2' }} FCFA</td>
                     <td class="num fw-600">{{ formatCurrency(pos.value) }}</td>
                     <td class="num">
                       <div class="pl-cell" [class]="plClass(pos.pl)">
@@ -439,7 +439,7 @@
                         </div>
                       </td>
                       <td class="num">{{ tx.quantity | number:'1.0-4' }}</td>
-                      <td class="num">{{ tx.price | number:'1.2-2' }} €</td>
+                      <td class="num">{{ tx.price | number:'1.2-2' }} FCFA</td>
                       <td class="num fw-600">{{ formatCurrency(tx.totalAmount) }}</td>
                       <td class="num">{{ tx.transactionDate }}</td>
                     </tr>
@@ -624,11 +624,11 @@
           </div>
           <div class="detail-analysis-row">
             <span class="da-label">Support</span>
-            <span class="da-value">{{ detailAnalysis.support | number:'1.2-2' }} €</span>
+            <span class="da-value">{{ detailAnalysis.support | number:'1.2-2' }} FCFA</span>
           </div>
           <div class="detail-analysis-row">
             <span class="da-label">Résistance</span>
-            <span class="da-value">{{ detailAnalysis.resistance | number:'1.2-2' }} €</span>
+            <span class="da-value">{{ detailAnalysis.resistance | number:'1.2-2' }} FCFA</span>
           </div>
           <div class="detail-analysis-row" *ngIf="detailAnalysis.rsi != null">
             <span class="da-label">RSI (14)</span>
@@ -714,7 +714,7 @@
               <span class="inst-name">{{ inst.short_name }}</span>
             </div>
             <div class="inst-price" *ngIf="inst.close_price">
-              <span class="inst-price-val">{{ inst.close_price | number:'1.2-2' }} {{ inst.currency || '€' }}</span>
+              <span class="inst-price-val">{{ inst.close_price | number:'1.2-2' }} {{ inst.currency || 'FCFA' }}</span>
               <span class="inst-variation"
                 [class.positive]="(inst.price_variation_pct ?? 0) >= 0"
                 [class.negative]="(inst.price_variation_pct ?? 0) < 0">
@@ -738,7 +738,7 @@
           <span class="inst-name">{{ selectedInstrument.short_name }}</span>
         </div>
         <div class="inst-price">
-          <span class="inst-price-val">{{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || '€' }}</span>
+          <span class="inst-price-val">{{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || 'FCFA' }}</span>
           <span class="inst-variation"
             [class.positive]="(selectedInstrument.price_variation_pct ?? 0) >= 0"
             [class.negative]="(selectedInstrument.price_variation_pct ?? 0) < 0">
@@ -756,11 +756,11 @@
                    min="0.0001" step="0.0001" required/>
           </div>
           <div class="form-group">
-            <label>Prix unitaire ({{ selectedInstrument.currency || '€' }}) *</label>
+            <label>Prix unitaire ({{ selectedInstrument.currency || 'FCFA' }}) *</label>
             <input type="number" [(ngModel)]="buyForm.price" name="price"
                    min="0.0001" step="0.0001" required/>
             <span class="form-hint" *ngIf="selectedInstrument.close_price">
-              Dernier cours : {{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || '€' }}
+              Dernier cours : {{ selectedInstrument.close_price | number:'1.2-2' }} {{ selectedInstrument.currency || 'FCFA' }}
             </span>
             <span class="form-hint" *ngIf="!selectedInstrument.close_price">
               Aucun cours disponible — saisissez le prix manuellement
@@ -879,10 +879,10 @@
           <span class="form-hint">Max : {{ sellingPosition?.quantity | number:'1.0-4' }}</span>
         </div>
         <div class="form-group">
-          <label>Prix de vente (€) *</label>
+          <label>Prix de vente (FCFA) *</label>
           <input type="number" [(ngModel)]="sellForm.price" name="price"
                  min="0.01" step="0.01" required/>
-          <span class="form-hint">Dernier prix connu : {{ sellingPosition?.currentPrice | number:'1.2-2' }} €</span>
+          <span class="form-hint">Dernier prix connu : {{ sellingPosition?.currentPrice | number:'1.2-2' }} FCFA</span>
         </div>
       </div>
 
@@ -946,12 +946,12 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Prix d'achat (€) *</label>
+          <label>Prix d'achat (FCFA) *</label>
           <input type="number" [(ngModel)]="form.purchasePrice" name="purchasePrice"
                  min="0" step="0.01" required/>
         </div>
         <div class="form-group">
-          <label>Prix actuel (€) *</label>
+          <label>Prix actuel (FCFA) *</label>
           <input type="number" [(ngModel)]="form.currentPrice" name="currentPrice"
                  min="0" step="0.01" required/>
         </div>

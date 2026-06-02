@@ -33,13 +33,6 @@
         </svg>
         <span *ngIf="!sidebarCollapsed">Utilisateurs</span>
       </a>
-      <a class="nav-item disabled" style="cursor:not-allowed; opacity:.45">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-        <span *ngIf="!sidebarCollapsed">Validation</span>
-      </a>
       <a class="nav-item" [class.active]="activeNav==='config'" (click)="navigateTo('config')" style="cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>

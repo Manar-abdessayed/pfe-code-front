@@ -647,7 +647,7 @@ export class PortfolioComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(val: number): string {
-    return this.currencyFmt.format(val) + ' €';
+    return this.currencyFmt.format(val) + ' FCFA';
   }
 
   formatPercent(val: number): string {
