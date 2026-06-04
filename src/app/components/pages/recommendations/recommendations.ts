@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { Auth } from '../../../services/auth';
 import { RecommendationsService, Recommendation } from '../../../services/recommendations';
 import { ProfileService, UserProfile } from '../../../services/profile';
@@ -49,9 +49,10 @@ export class RecommendationsComponent implements OnInit {
   }
 
   loadRecommendations(): void {
+    if (!this.currentUser?.id) { this.isLoading = false; return; }
     this.isLoading = true;
     this.errorMsg = '';
-    this.recoService.getRecommendations('all').subscribe({
+    this.recoService.getRecommendations(this.currentUser.id, 'all').subscribe({
       next: (data) => {
         this.recommendations = data;
         this.applyFilter();
@@ -73,9 +74,12 @@ export class RecommendationsComponent implements OnInit {
     this.isRefreshing = true;
     this.errorMsg = '';
 
+    let tempConvId: string;
+
     this.assistantService
       .createConversation(this.currentUser.id, 'recommandations')
       .pipe(
+        tap((conv: any) => { tempConvId = conv.id; }),
         switchMap((conv: any) =>
           this.assistantService.sendMessage(
             this.currentUser.id,
@@ -87,13 +91,15 @@ export class RecommendationsComponent implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
+          // Delete the temporary conversation so it doesn't appear in the assistant
+          this.assistantService.deleteConversation(this.currentUser.id, tempConvId).subscribe();
+
           const parsed = this.parseAssistantResponse(res.response ?? '');
           if (parsed.length > 0) {
             this.recommendations = parsed;
             this.applyFilter();
             this.lastUpdated = new Date().toISOString();
-            // Persist to DB so the dashboard can display them
-            this.recoService.saveBatch(parsed).subscribe();
+            this.recoService.saveBatch(this.currentUser.id, parsed).subscribe();
           } else {
             this.errorMsg = "Impossible de lire les recommandations de l'assistant.";
           }
@@ -157,6 +163,7 @@ export class RecommendationsComponent implements OnInit {
 
       results.push({
         id: `${symbol}_${Date.now()}_${results.length}`,
+        userId: '',
         isin: '',
         symbol,
         companyName,

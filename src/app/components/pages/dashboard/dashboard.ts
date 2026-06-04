@@ -168,9 +168,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ── Recommendations ─────────────────────────────────────────────────────────
 
   startRecoPolling(): void {
+    if (!this.currentUser?.id) { this.recoLoading = false; return; }
     this.recoLoading = true;
     this.recoSub = interval(30_000).pipe(startWith(0)).subscribe(() => {
-      this.recoService.getRecommendations('all').subscribe({
+      this.recoService.getRecommendations(this.currentUser.id, 'all').subscribe({
         next: (data) => {
           this.allRecos = data;
           this.recentRecos = data.slice(0, 5);

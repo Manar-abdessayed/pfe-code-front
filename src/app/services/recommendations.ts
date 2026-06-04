@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface Recommendation {
   id: string;
+  userId: string;
   isin: string;
   symbol: string;
   companyName: string;
@@ -39,15 +40,15 @@ export class RecommendationsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getRecommendations(filter: string = 'all'): Observable<Recommendation[]> {
-    return this.http.get<Recommendation[]>(`${this.api}?filter=${filter}`);
+  getRecommendations(userId: string, filter: string = 'all'): Observable<Recommendation[]> {
+    return this.http.get<Recommendation[]>(`${this.api}?userId=${userId}&filter=${filter}`);
   }
 
   generate(): Observable<{ message: string; count: number }> {
     return this.http.post<{ message: string; count: number }>(`${this.api}/generate`, {});
   }
 
-  saveBatch(recs: Recommendation[]): Observable<{ message: string; count: number }> {
-    return this.http.post<{ message: string; count: number }>(`${this.api}/save-batch`, recs);
+  saveBatch(userId: string, recs: Recommendation[]): Observable<{ message: string; count: number }> {
+    return this.http.post<{ message: string; count: number }>(`${this.api}/save-batch?userId=${userId}`, recs);
   }
 }
