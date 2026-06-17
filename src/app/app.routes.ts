@@ -12,6 +12,7 @@ import { AdminSupervisionComponent } from './components/admin/supervision/admin-
 import { AdminUsersComponent } from './components/admin/users/admin-users';
 import { AdminConfigComponent } from './components/admin/config/admin-config';
 import { RecommendationsComponent } from './components/pages/recommendations/recommendations';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -19,13 +20,13 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'assistant', component: AssistantComponent },
-  { path: 'profile', component: ProfileComponent },
-  { path: 'portfolio', component: PortfolioComponent },
-  { path: 'recommendations', component: RecommendationsComponent },
-  { path: 'settings', component: SettingsComponent },
-  { path: 'admin', component: AdminSupervisionComponent },
-  { path: 'admin/users', component: AdminUsersComponent },
-  { path: 'admin/config', component: AdminConfigComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'assistant', component: AssistantComponent, canActivate: [authGuard] },
+  { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
+  { path: 'portfolio', component: PortfolioComponent, canActivate: [authGuard] },
+  { path: 'recommendations', component: RecommendationsComponent, canActivate: [authGuard] },
+  { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
+  { path: 'admin', component: AdminSupervisionComponent, canActivate: [authGuard] },
+  { path: 'admin/users', component: AdminUsersComponent, canActivate: [authGuard] },
+  { path: 'admin/config', component: AdminConfigComponent, canActivate: [authGuard] },
 ];
