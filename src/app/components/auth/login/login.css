@@ -18,7 +18,7 @@
 
 .login-alert-user {
   background: #f0fdf4;
-  color: #16a34a;
+  color: #166534;
   border: 1px solid #bbf7d0;
 }
 
@@ -31,4 +31,15 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── reCAPTCHA ───────────────────────────────────────────────── */
+.captcha-wrapper {
+  margin-bottom: 1rem;
+}
+
+.captcha-error {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #dc2626;
 }

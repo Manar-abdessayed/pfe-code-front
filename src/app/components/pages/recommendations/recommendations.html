@@ -378,6 +378,234 @@
             <div class="card-date">{{ formatDate(rec.createdAt) }}</div>
           </div>
 
+          <!-- Buy / Sell Button based on action -->
+          @if (rec.action === 'VENTE') {
+            <button class="btn-sell-card" (click)="openSellModal(rec)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 19 19 12 12 5"/>
+              </svg>
+              Vendre
+            </button>
+          } @else {
+            <button class="btn-buy-card" (click)="openBuyModal(rec)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Acheter
+            </button>
+          }
+
+        </div>
+      </div>
+
+      <!-- BUY MODAL -->
+      <div class="modal-overlay" *ngIf="buyModal.open" (click)="closeBuyModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+
+          <div class="modal-header">
+            <div class="modal-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Acheter une action
+            </div>
+            <button class="modal-close" (click)="closeBuyModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-stock-row">
+            <div class="modal-avatar">{{ getInitials(buyModal.rec?.companyName || buyModal.rec?.symbol || '') }}</div>
+            <div class="modal-stock-info">
+              <div class="modal-stock-name">{{ buyModal.rec?.companyName }}</div>
+              <div class="modal-stock-symbol">{{ buyModal.rec?.symbol }}</div>
+            </div>
+            <div class="modal-stock-price">{{ buyModal.rec?.currentPrice | number:'1.2-2' }} FCFA</div>
+          </div>
+
+          <div class="modal-form">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="buyQty">Quantité *</label>
+                <input id="buyQty" type="number" min="1" [(ngModel)]="buyModal.quantity" name="buyQty">
+              </div>
+              <div class="form-group">
+                <label for="buyPrice">Prix unitaire (FCFA) *</label>
+                <input id="buyPrice" type="number" min="0" [(ngModel)]="buyModal.price" name="buyPrice">
+                <div class="input-hint">Dernier cours : {{ buyModal.rec?.currentPrice | number:'1.2-2' }} FCFA</div>
+              </div>
+            </div>
+
+            <div class="budget-row">
+              <div class="budget-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                Budget disponible
+              </div>
+              <div class="budget-val">{{ userProfile?.availableCapital | number:'1.2-2' }} FCFA</div>
+            </div>
+
+            <div class="total-row">
+              <span>Montant total estimé</span>
+              <span class="total-val">{{ buyTotal | number:'1.2-2' }} FCFA</span>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="buySector">Secteur</label>
+                <select id="buySector" [(ngModel)]="buyModal.sector" name="buySector">
+                  <option *ngFor="let s of sectors" [value]="s">{{ s }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="buyAsset">Classe d'actifs</label>
+                <select id="buyAsset" [(ngModel)]="buyModal.assetClass" name="buyAsset">
+                  <option *ngFor="let a of assetClasses" [value]="a">{{ a }}</option>
+                </select>
+              </div>
+            </div>
+
+            @if (buyModal.error) {
+              <div class="modal-alert modal-alert-error">{{ buyModal.error }}</div>
+            }
+            @if (buyModal.success) {
+              <div class="modal-alert modal-alert-success">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Achat confirmé avec succès !
+              </div>
+            }
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-modal-cancel" (click)="closeBuyModal()" [disabled]="buyModal.isBuying">Annuler</button>
+            <button class="btn-modal-confirm" (click)="confirmBuy()" [disabled]="buyModal.isBuying || buyModal.success">
+              @if (buyModal.isBuying) {
+                <span class="spinner-sm"></span> Traitement...
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Confirmer l'achat
+              }
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SELL MODAL -->
+      <div class="modal-overlay" *ngIf="sellModal.open"
+           (click)="closeSellModal()" (keydown.escape)="closeSellModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+
+          <div class="modal-header">
+            <div class="modal-title modal-title-sell">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Vendre — {{ sellModal.rec?.symbol }}
+            </div>
+            <button class="modal-close" (click)="closeSellModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="sell-info-table" *ngIf="!sellModal.loadingPosition && sellModal.position">
+            <div class="sell-info-row">
+              <span class="sell-info-label">Société</span>
+              <span class="sell-info-val">{{ sellModal.rec?.companyName }}</span>
+            </div>
+            <div class="sell-info-row">
+              <span class="sell-info-label">Quantité détenue</span>
+              <span class="sell-info-val">{{ sellModal.position.quantity }}</span>
+            </div>
+            <div class="sell-info-row">
+              <span class="sell-info-label">Valeur actuelle</span>
+              <span class="sell-info-val">{{ sellModal.position.value | number:'1.2-2' }} FCFA</span>
+            </div>
+            <div class="sell-info-row">
+              <span class="sell-info-label">Plus-value latente</span>
+              <span class="sell-info-val"
+                    [class.text-green-sell]="sellModal.position.pl >= 0"
+                    [class.text-red-sell]="sellModal.position.pl < 0">
+                {{ sellModal.position.pl | number:'1.2-2' }} FCFA
+                ({{ sellModal.position.pl >= 0 ? '+' : '' }}{{ sellModal.position.plPercent | number:'1.2-2' }}%)
+              </span>
+            </div>
+          </div>
+
+          <div class="sell-loading" *ngIf="sellModal.loadingPosition">
+            <div class="spinner-sm-dark"></div>
+            Chargement de la position...
+          </div>
+
+          <div class="modal-form" *ngIf="!sellModal.loadingPosition && sellModal.position">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="sellQty">Quantité à vendre *</label>
+                <input id="sellQty" type="number" min="1"
+                       [max]="sellModal.position.quantity"
+                       [(ngModel)]="sellModal.quantity" name="sellQty">
+                <div class="input-hint">Max : {{ sellModal.position.quantity }}</div>
+              </div>
+              <div class="form-group">
+                <label for="sellPrice">Prix de vente (FCFA) *</label>
+                <input id="sellPrice" type="number" min="0"
+                       [(ngModel)]="sellModal.price" name="sellPrice">
+                <div class="input-hint">Dernier prix connu : {{ sellModal.position.currentPrice | number:'1.2-2' }} FCFA</div>
+              </div>
+            </div>
+
+            <div class="sell-total-row">
+              <span>Montant estimé de la vente</span>
+              <span class="sell-total-val">{{ sellTotal | number:'1.2-2' }} FCFA</span>
+            </div>
+
+            @if (sellModal.error) {
+              <div class="modal-alert modal-alert-error">{{ sellModal.error }}</div>
+            }
+            @if (sellModal.success) {
+              <div class="modal-alert modal-alert-success">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Vente confirmée avec succès !
+              </div>
+            }
+          </div>
+
+          @if (!sellModal.loadingPosition && !sellModal.position) {
+            <div class="modal-form">
+              <div class="modal-alert modal-alert-error">{{ sellModal.error }}</div>
+            </div>
+          }
+
+          <div class="modal-footer">
+            <button class="btn-modal-cancel" (click)="closeSellModal()" [disabled]="sellModal.isSelling">Annuler</button>
+            <button class="btn-modal-sell"
+                    (click)="confirmSell()"
+                    [disabled]="sellModal.isSelling || sellModal.success || !sellModal.position">
+              @if (sellModal.isSelling) {
+                <span class="spinner-sm"></span> Traitement...
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 19 19 12 12 5"/>
+                </svg>
+                Confirmer la vente
+              }
+            </button>
+          </div>
+
         </div>
       </div>
 

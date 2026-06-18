@@ -1,16 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs/operators';
 import { Auth } from '../../../services/auth';
 import { RecommendationsService, Recommendation } from '../../../services/recommendations';
 import { ProfileService, UserProfile } from '../../../services/profile';
 import { AssistantService } from '../../../services/assistant';
+import { PortfolioService } from '../../../services/portfolio';
+import type { PositionItem } from '../../../services/portfolio';
 
 @Component({
   selector: 'app-recommendations',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './recommendations.html',
   styleUrls: ['./recommendations.css'],
 })
@@ -30,12 +33,42 @@ export class RecommendationsComponent implements OnInit {
   errorMsg = '';
   lastUpdated: string | null = null;
 
+  buyModal: {
+    open: boolean;
+    rec: Recommendation | null;
+    quantity: number;
+    price: number;
+    sector: string;
+    assetClass: string;
+    isBuying: boolean;
+    success: boolean;
+    error: string;
+  } = { open: false, rec: null, quantity: 1, price: 0, sector: 'Technologie', assetClass: 'Actions',
+        isBuying: false, success: false, error: '' };
+
+  readonly sectors      = ['Technologie', 'Finance', 'Énergie', 'Santé', 'Industrie', 'Immobilier', 'Consommation', 'Télécommunications', 'Matériaux', 'Autres'];
+  readonly assetClasses = ['Actions', 'Obligations', 'ETF', 'Crypto', 'Matières premières'];
+
+  sellModal: {
+    open: boolean;
+    rec: Recommendation | null;
+    position: PositionItem | null;
+    quantity: number;
+    price: number;
+    isSelling: boolean;
+    success: boolean;
+    error: string;
+    loadingPosition: boolean;
+  } = { open: false, rec: null, position: null, quantity: 1, price: 0,
+        isSelling: false, success: false, error: '', loadingPosition: false };
+
   constructor(
     private router: Router,
     private auth: Auth,
     private recoService: RecommendationsService,
     private profileService: ProfileService,
     private assistantService: AssistantService,
+    private portfolioService: PortfolioService,
   ) {}
 
   ngOnInit(): void {
@@ -186,6 +219,128 @@ export class RecommendationsComponent implements OnInit {
     }
 
     return results;
+  }
+
+  openBuyModal(rec: Recommendation): void {
+    this.buyModal = {
+      open: true, rec,
+      quantity: 1,
+      price: rec.currentPrice || 0,
+      sector: 'Technologie',
+      assetClass: 'Actions',
+      isBuying: false, success: false, error: ''
+    };
+  }
+
+  closeBuyModal(): void {
+    this.buyModal.open = false;
+  }
+
+  get buyTotal(): number {
+    return Math.round(this.buyModal.quantity * this.buyModal.price * 100) / 100;
+  }
+
+  confirmBuy(): void {
+    if (!this.currentUser?.id || !this.buyModal.rec) return;
+    if (this.buyModal.quantity <= 0 || this.buyModal.price <= 0) {
+      this.buyModal.error = 'Quantité et prix doivent être positifs.';
+      return;
+    }
+
+    this.buyModal.isBuying = true;
+    this.buyModal.error = '';
+
+    this.portfolioService.buyStock(this.currentUser.id, {
+      symbol:      this.buyModal.rec.symbol,
+      companyName: this.buyModal.rec.companyName,
+      quantity:    this.buyModal.quantity,
+      price:       this.buyModal.price,
+      sector:      this.buyModal.sector,
+      assetClass:  this.buyModal.assetClass,
+    }).subscribe({
+      next: (portfolio) => {
+        this.buyModal.isBuying = false;
+        this.buyModal.success  = true;
+        if (this.userProfile) {
+          this.userProfile.availableCapital = portfolio.availableCapital;
+        }
+        setTimeout(() => this.closeBuyModal(), 1500);
+      },
+      error: (err) => {
+        this.buyModal.isBuying = false;
+        this.buyModal.error = err.error?.message || "Erreur lors de l'achat.";
+      }
+    });
+  }
+
+  openSellModal(rec: Recommendation): void {
+    if (!this.currentUser?.id) return;
+    this.sellModal = { open: true, rec, position: null, quantity: 1,
+                       price: rec.currentPrice || 0, isSelling: false,
+                       success: false, error: '', loadingPosition: true };
+
+    this.portfolioService.getPortfolio(this.currentUser.id).subscribe({
+      next: (portfolio) => {
+        const pos = portfolio.positions.find(
+          p => p.symbol.toUpperCase() === rec.symbol.toUpperCase()
+        ) ?? null;
+        this.sellModal.position       = pos;
+        this.sellModal.price          = pos?.currentPrice ?? rec.currentPrice ?? 0;
+        this.sellModal.loadingPosition = false;
+        if (!pos) this.sellModal.error = `Vous ne détenez pas de position sur ${rec.symbol}.`;
+      },
+      error: () => {
+        this.sellModal.loadingPosition = false;
+        this.sellModal.error = 'Impossible de charger le portefeuille.';
+      }
+    });
+  }
+
+  closeSellModal(): void { this.sellModal.open = false; }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.buyModal.open)  this.closeBuyModal();
+    if (this.sellModal.open) this.closeSellModal();
+  }
+
+  get sellTotal(): number {
+    return Math.round(this.sellModal.quantity * this.sellModal.price * 100) / 100;
+  }
+
+  confirmSell(): void {
+    if (!this.currentUser?.id || !this.sellModal.position) return;
+    const maxQty = this.sellModal.position.quantity;
+    if (this.sellModal.quantity <= 0 || this.sellModal.quantity > maxQty) {
+      this.sellModal.error = `Quantité invalide. Maximum : ${maxQty}.`;
+      return;
+    }
+    if (this.sellModal.price <= 0) {
+      this.sellModal.error = 'Le prix doit être positif.';
+      return;
+    }
+
+    this.sellModal.isSelling = true;
+    this.sellModal.error     = '';
+
+    this.portfolioService.sellStock(this.currentUser.id, {
+      positionId: this.sellModal.position.id,
+      quantity:   this.sellModal.quantity,
+      price:      this.sellModal.price,
+    }).subscribe({
+      next: (portfolio) => {
+        this.sellModal.isSelling = false;
+        this.sellModal.success   = true;
+        if (this.userProfile) {
+          this.userProfile.availableCapital = portfolio.availableCapital;
+        }
+        setTimeout(() => this.closeSellModal(), 1500);
+      },
+      error: (err) => {
+        this.sellModal.isSelling = false;
+        this.sellModal.error = err.error?.message || 'Erreur lors de la vente.';
+      }
+    });
   }
 
   setFilter(f: 'all' | 'ACHAT' | 'VENTE' | 'CONSERVER'): void {
